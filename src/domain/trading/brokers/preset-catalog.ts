@@ -15,7 +15,7 @@ import { createHash, randomBytes } from 'node:crypto'
 
 // ==================== Types ====================
 
-export type BrokerEngine = 'ccxt' | 'alpaca' | 'ibkr' | 'leverup' | 'longbridge' | 'mock'
+export type BrokerEngine = 'ccxt' | 'alpaca' | 'ibkr' | 'leverup' | 'longbridge' | 'mock' | 'kiwoom'
 
 export interface ModeOption {
   id: string
@@ -386,6 +386,41 @@ export const LONGBRIDGE_PRESET: BrokerPresetDef = {
   isPaper: (d) => d.mode === 'paper',
 }
 
+// ==================== Kiwoom Securities (KRX) ====================
+
+export const KIWOOM_PRESET: BrokerPresetDef = {
+  id: 'kiwoom',
+  label: '키움증권 (KRX)',
+  description: '키움증권 OpenAPI+ REST — KOSPI/KOSDAQ 주식 거래. 실전투자 및 모의투자 지원.',
+  category: 'recommended',
+  hint: '키움증권 OpenAPI+ REST를 사용합니다. openapi.kiwoom.com에서 appkey와 secretkey를 발급받으세요. 모의투자는 별도 신청이 필요합니다. IP 화이트리스트 등록 후 사용 가능합니다.',
+  defaultName: 'kiwoom-main',
+  badge: 'KW',
+  badgeColor: 'text-warning',
+  engine: 'kiwoom',
+  guardCategory: 'securities',
+  modes: [
+    { id: 'paper', label: '모의투자 (Paper)' },
+    { id: 'live',  label: '실전투자 (Live)' },
+  ],
+  zodSchema: z.object({
+    mode:      z.enum(['paper', 'live']).default('paper').describe('투자 환경'),
+    appkey:    z.string().min(1).describe('App Key'),
+    secretkey: z.string().min(1).describe('Secret Key'),
+  }),
+  subtitleFields: [
+    { field: 'mode', prefix: '키움 · ' },
+  ],
+  writeOnlyFields: ['appkey', 'secretkey'],
+  fingerprintFields: ['mode', 'appkey'],
+  toEngineConfig: (d) => ({
+    paper:     d.mode === 'paper',
+    appkey:    d.appkey,
+    secretkey: d.secretkey,
+  }),
+  isPaper: (d) => d.mode === 'paper',
+}
+
 // ==================== Other ecosystem brokers (lower-tier, isolated) ====================
 
 export const LEVERUP_PRESET: BrokerPresetDef = {
@@ -462,6 +497,7 @@ export const BROKER_PRESET_CATALOG: BrokerPresetDef[] = [
   IBKR_PRESET,
   ALPACA_PRESET,
   LONGBRIDGE_PRESET,
+  KIWOOM_PRESET,
   HYPERLIQUID_PRESET,
   // ---- Crypto ----
   OKX_PRESET,
