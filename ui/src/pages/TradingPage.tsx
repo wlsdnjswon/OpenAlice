@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Field, inputClass } from '../components/form'
 import { SDKSelector } from '../components/SDKSelector'
 import type { SDKOption } from '../components/SDKSelector'
@@ -88,6 +89,7 @@ function summarizeCurve(points: EquityCurvePoint[]): CurveSummary {
 // ==================== Page ====================
 
 export function TradingPage() {
+  const { t } = useTranslation()
   const tc = useTradingConfig()
   const healthMap = useAccountHealth()
   const navigate = useNavigate()
@@ -126,12 +128,12 @@ export function TradingPage() {
     return () => clearInterval(id)
   }, [refreshAggregates])
 
-  if (tc.loading) return <PageShell subtitle="Loading..." />
+  if (tc.loading) return <PageShell subtitle={t('trading.status.loading')} />
   if (tc.error) {
     return (
-      <PageShell subtitle="Failed to load trading configuration.">
+      <PageShell subtitle={t('trading.status.loadError')}>
         <p className="text-[13px] text-red">{tc.error}</p>
-        <button onClick={tc.refresh} className="mt-2 btn-secondary">Retry</button>
+        <button onClick={tc.refresh} className="mt-2 btn-secondary">{t('trading.status.retry')}</button>
       </PageShell>
     )
   }
@@ -139,8 +141,8 @@ export function TradingPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <PageHeader
-        title="Trading"
-        description="Configure your UTAs (Unified Trading Accounts)."
+        title={t('trading.title')}
+        description={t('trading.description')}
         live={tc.utas.length > 0 ? { lastUpdated } : undefined}
       />
 
@@ -171,7 +173,7 @@ export function TradingPage() {
                   onClick={() => setShowAdd(true)}
                   className="w-full py-2.5 text-[12px] text-text-muted hover:text-text border border-dashed border-border hover:border-text-muted/40 rounded-lg transition-colors"
                 >
-                  + Add UTA
+                  {t('trading.addUta')}
                 </button>
               </div>
             </>
@@ -207,9 +209,10 @@ export function TradingPage() {
 // ==================== Page Shell ====================
 
 function PageShell({ subtitle, children }: { subtitle: string; children?: React.ReactNode }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <PageHeader title="Trading" description={subtitle} />
+      <PageHeader title={t('trading.title')} description={subtitle} />
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5">{children}</div>
     </div>
   )
@@ -218,14 +221,15 @@ function PageShell({ subtitle, children }: { subtitle: string; children?: React.
 // ==================== Empty State ====================
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-xl border border-dashed border-border p-12 text-center">
-      <h3 className="text-[16px] font-semibold text-text mb-2">No UTAs configured</h3>
+      <h3 className="text-[16px] font-semibold text-text mb-2">{t('trading.noUtasTitle')}</h3>
       <p className="text-[13px] text-text-muted mb-6 max-w-[320px] mx-auto leading-relaxed">
-        Connect a crypto exchange or brokerage to start automated trading.
+        {t('trading.noUtasHint')}
       </p>
       <button onClick={onAdd} className="btn-primary">
-        + Add UTA
+        {t('trading.addUta')}
       </button>
     </div>
   )
@@ -237,6 +241,7 @@ function PortfolioBanner({ equity, curve }: {
   equity: EquitySummary
   curve: { values: number[]; firstAtCutoff: number | null; latest: number | null } | null
 }) {
+  const { t } = useTranslation()
   const total = Number(equity.totalEquity)
   const cash = Number(equity.totalCash)
   const unrealized = Number(equity.totalUnrealizedPnL)
@@ -252,14 +257,14 @@ function PortfolioBanner({ equity, curve }: {
     const color = sign === 'up' ? 'text-green' : sign === 'down' ? 'text-red' : 'text-text-muted'
     deltaNode = (
       <span className={`text-[14px] tabular-nums ${color}`}>
-        {arrow} {fmtPnl(delta, 'USD')} ({fmtPctSigned(pct)}) today
+        {arrow} {fmtPnl(delta, 'USD')} ({fmtPctSigned(pct)}) {t('portfolio.today')}
       </span>
     )
   }
 
   return (
     <div className="rounded-lg border border-border bg-bg-secondary px-5 py-4">
-      <p className="text-[11px] text-text-muted uppercase tracking-wide mb-1">Total Portfolio · USD</p>
+      <p className="text-[11px] text-text-muted uppercase tracking-wide mb-1">{t('trading.portfolio')}</p>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <span className="text-[26px] md:text-[30px] font-bold tabular-nums text-text">
           {fmt(total, 'USD')}
@@ -267,9 +272,9 @@ function PortfolioBanner({ equity, curve }: {
         {deltaNode}
       </div>
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-text-muted">
-        <span>Cash <span className="text-text tabular-nums">{fmt(cash, 'USD')}</span></span>
+        <span>{t('trading.cash')} <span className="text-text tabular-nums">{fmt(cash, 'USD')}</span></span>
         <span className="text-text-muted/40">·</span>
-        <span>Unrealized <span className={`tabular-nums ${unrealized >= 0 ? 'text-green' : 'text-red'}`}>{fmtPnl(unrealized, 'USD')}</span></span>
+        <span>{t('trading.unrealized')} <span className={`tabular-nums ${unrealized >= 0 ? 'text-green' : 'text-red'}`}>{fmtPnl(unrealized, 'USD')}</span></span>
       </div>
     </div>
   )
@@ -308,6 +313,7 @@ function UTACard({ uta, preset, health, equity, curve, onClick }: {
   curve?: PerUtaCurve | null
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   const isDisabled = health?.disabled || uta.enabled === false
   const badge = preset
     ? { text: preset.badge, color: `${preset.badgeColor} ${preset.badgeColor.replace('text-', 'bg-')}/10` }
@@ -344,7 +350,7 @@ function UTACard({ uta, preset, health, equity, curve, onClick }: {
         </div>
         <div className="shrink-0">
           {uta.enabled === false
-            ? <span className="text-[11px] text-text-muted">Disabled</span>
+            ? <span className="text-[11px] text-text-muted">{t('trading.disabled')}</span>
             : <HealthBadge health={health} />
           }
         </div>
@@ -357,16 +363,16 @@ function UTACard({ uta, preset, health, equity, curve, onClick }: {
               {fmt(equityNum, 'USD')}
             </p>
           ) : (
-            <p className="text-[16px] text-text-muted/70 italic">live data unavailable</p>
+            <p className="text-[16px] text-text-muted/70 italic">{t('trading.liveDataUnavailable')}</p>
           )}
           {delta && (
             <p className={`text-[12px] tabular-nums mt-0.5 ${delta.value >= 0 ? 'text-green' : 'text-red'}`}>
-              {delta.value >= 0 ? '▲' : '▼'} {fmtPnl(delta.value, 'USD')} ({fmtPctSigned(delta.pct)}) today
+              {delta.value >= 0 ? '▲' : '▼'} {fmtPnl(delta.value, 'USD')} ({fmtPctSigned(delta.pct)}) {t('portfolio.today')}
             </p>
           )}
           {cashNum != null && Number.isFinite(cashNum) && (
             <p className="text-[11px] text-text-muted mt-1">
-              Cash <span className="text-text-muted tabular-nums">{fmt(cashNum, 'USD')}</span>
+              {t('trading.cash')} <span className="text-text-muted tabular-nums">{fmt(cashNum, 'USD')}</span>
             </p>
           )}
         </div>
@@ -420,6 +426,7 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
   onOpenExisting: (id: string) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<WizardStep>('pick')
   const [presetId, setPresetId] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -521,9 +528,9 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
   }
 
   const headerLabel =
-    step === 'pick'   ? 'New UTA · Pick Platform' :
-    step === 'config' ? `New UTA · Configure ${preset?.label ?? ''}` :
-                        `New UTA · Test ${preset?.label ?? ''}`
+    step === 'pick'   ? t('trading.wizard.stepPlatform') :
+    step === 'config' ? `${t('trading.wizard.stepConfigure')} ${preset?.label ?? ''}` :
+                        `${t('trading.wizard.stepTest')} ${preset?.label ?? ''}`
 
   return (
     <Dialog onClose={onClose}>
@@ -544,13 +551,13 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
           <div className="space-y-6">
             {recommendedOptions.length > 0 && (
               <section className="space-y-3">
-                <PickerSectionHeader title="Recommended" />
+                <PickerSectionHeader title={t('trading.wizard.recommended')} />
                 <SDKSelector options={recommendedOptions} selected={presetId ?? ''} onSelect={handlePick} />
               </section>
             )}
             {cryptoOptions.length > 0 && (
               <section className="space-y-3">
-                <PickerSectionHeader title="Crypto" />
+                <PickerSectionHeader title={t('trading.wizard.crypto')} />
                 <SDKSelector options={cryptoOptions} selected={presetId ?? ''} onSelect={handlePick} />
               </section>
             )}
@@ -561,7 +568,7 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
           <div className="space-y-5">
             {preset.hint && <HintBlock text={preset.hint} />}
             <div className="space-y-3">
-              <Field label="Name" description="Display label for this account. The unique id is derived automatically from the credentials below.">
+              <Field label={t('trading.wizard.nameLabel')} description={t('trading.wizard.nameHint')}>
                 <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder={defaultName} />
               </Field>
               <SchemaFormFields
@@ -575,7 +582,7 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
                   onClick={() => setShowSecrets(!showSecrets)}
                   className="text-[11px] text-text-muted hover:text-text transition-colors"
                 >
-                  {showSecrets ? 'Hide secrets' : 'Show secrets'}
+                  {showSecrets ? t('trading.wizard.hideSecrets') : t('trading.wizard.showSecrets')}
                 </button>
               )}
               {error && <p className="text-[12px] text-red">{error}</p>}
@@ -595,31 +602,31 @@ function CreateWizard({ presets, onSave, onOpenExisting, onClose }: {
       <div className="shrink-0 flex items-center justify-between px-6 py-4 border-t border-border">
         {step === 'pick' && (
           <>
-            <button onClick={onClose} className="btn-secondary">Cancel</button>
-            <span className="text-[11px] text-text-muted">Pick a platform to continue</span>
+            <button onClick={onClose} className="btn-secondary">{t('common.cancel')}</button>
+            <span className="text-[11px] text-text-muted">{t('trading.wizard.pickPlatform')}</span>
           </>
         )}
         {step === 'config' && (
           <>
-            <button onClick={() => setStep('pick')} className="btn-secondary">← Back</button>
+            <button onClick={() => setStep('pick')} className="btn-secondary">{t('trading.wizard.back')}</button>
             <button onClick={handleTest} disabled={testing} className="btn-primary">
-              {testing ? 'Testing...' : 'Test Connection →'}
+              {testing ? t('trading.status.testing') : t('trading.wizard.testConnection')}
             </button>
           </>
         )}
         {step === 'test' && (
           <>
-            <button onClick={() => setStep('config')} className="btn-secondary">← Back</button>
+            <button onClick={() => setStep('config')} className="btn-secondary">{t('trading.wizard.back')}</button>
             {conflict ? (
               <button onClick={() => onOpenExisting(conflict.existing.id)} className="btn-primary">
-                Open existing
+                {t('trading.wizard.openExisting')}
               </button>
             ) : testResult?.success ? (
               <button onClick={handleSave} disabled={saving} className="btn-primary">
-                {saving ? 'Saving...' : 'Save UTA'}
+                {saving ? t('trading.status.saving') : t('trading.wizard.saveUta')}
               </button>
             ) : (
-              <span className="text-[11px] text-text-muted">Fix the config and try again</span>
+              <span className="text-[11px] text-text-muted">{t('trading.wizard.fixConfig')}</span>
             )}
           </>
         )}
@@ -650,11 +657,12 @@ function BrokerConflictPanel({ existing, onOpenExisting }: {
   existing: { id: string; label: string; presetId: string }
   onOpenExisting: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-yellow-400 shrink-0" />
-        <span className="text-[13px] font-medium text-text">Broker already configured</span>
+        <span className="text-[13px] font-medium text-text">{t('trading.wizard.alreadyConfigured')}</span>
       </div>
       <div className="rounded-md border border-yellow-400/30 bg-yellow-400/5 px-3 py-2.5">
         <p className="text-[12px] text-text leading-relaxed">
@@ -669,18 +677,19 @@ function BrokerConflictPanel({ existing, onOpenExisting }: {
       <p className="text-[11px] text-text-muted">
         Click <strong className="text-text">Open existing</strong> to use it, or <strong className="text-text">← Back</strong> to point this UTA at a different account.
       </p>
-      <button onClick={onOpenExisting} className="btn-secondary w-full">Open existing UTA</button>
+      <button onClick={onOpenExisting} className="btn-secondary w-full">{t('trading.wizard.openExisting')}</button>
     </div>
   )
 }
 
 function TestResultPanel({ result, utaId }: { result: TestConnectionResult; utaId: string }) {
+  const { t } = useTranslation()
   if (!result.success) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red shrink-0" />
-          <span className="text-[13px] font-medium text-red">Connection failed</span>
+          <span className="text-[13px] font-medium text-red">{t('trading.wizard.connectionFailed')}</span>
         </div>
         <div className="rounded-md border border-red/30 bg-red/5 px-3 py-2.5">
           <p className="text-[12px] text-text leading-relaxed whitespace-pre-wrap">{result.error ?? 'Unknown error'}</p>
@@ -701,22 +710,22 @@ function TestResultPanel({ result, utaId }: { result: TestConnectionResult; utaI
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-green shrink-0" />
-        <span className="text-[13px] font-medium text-green">Connected as {utaId}</span>
+        <span className="text-[13px] font-medium text-green">{t('trading.wizard.connectedAs')} {utaId}</span>
       </div>
 
       {acct && (
         <div className="rounded-md border border-border bg-bg-secondary/50 px-3 py-2.5 space-y-1">
           <div className="flex justify-between text-[12px]">
-            <span className="text-text-muted">Net Liquidation</span>
+            <span className="text-text-muted">{t('trading.table.netLiq')}</span>
             <span className="text-text font-medium">{acct.baseCurrency} {acct.netLiquidation}</span>
           </div>
           <div className="flex justify-between text-[12px]">
-            <span className="text-text-muted">Cash</span>
+            <span className="text-text-muted">{t('trading.cash')}</span>
             <span className="text-text">{acct.baseCurrency} {acct.totalCashValue}</span>
           </div>
           {acct.unrealizedPnL !== '0' && (
             <div className="flex justify-between text-[12px]">
-              <span className="text-text-muted">Unrealized P&L</span>
+              <span className="text-text-muted">{t('trading.table.unrealizedPnl')}</span>
               <span className="text-text">{acct.baseCurrency} {acct.unrealizedPnL}</span>
             </div>
           )}
@@ -725,19 +734,19 @@ function TestResultPanel({ result, utaId }: { result: TestConnectionResult; utaI
 
       <div>
         <p className="text-[12px] font-medium text-text-muted uppercase tracking-wide mb-2">
-          Positions ({positions.length})
+          {t('trading.positions')} ({positions.length})
         </p>
         {positions.length === 0 ? (
-          <p className="text-[12px] text-text-muted">No open positions — connection works, account is empty.</p>
+          <p className="text-[12px] text-text-muted">{t('trading.noPositions')}</p>
         ) : (
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="bg-bg-tertiary/30 text-text-muted">
-                  <th className="text-left px-2.5 py-1.5 font-medium">Contract</th>
-                  <th className="text-left px-2.5 py-1.5 font-medium">Side</th>
-                  <th className="text-right px-2.5 py-1.5 font-medium">Qty</th>
-                  <th className="text-right px-2.5 py-1.5 font-medium">Mkt Value</th>
+                  <th className="text-left px-2.5 py-1.5 font-medium">{t('trading.table.contract')}</th>
+                  <th className="text-left px-2.5 py-1.5 font-medium">{t('trading.table.side')}</th>
+                  <th className="text-right px-2.5 py-1.5 font-medium">{t('trading.table.qty')}</th>
+                  <th className="text-right px-2.5 py-1.5 font-medium">{t('trading.table.mktValue')}</th>
                 </tr>
               </thead>
               <tbody>

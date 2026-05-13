@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, type NewsArticle } from '../api'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/StateViews'
@@ -13,16 +14,12 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diff / 86_400_000)}d ago`
 }
 
-const LOOKBACK_OPTIONS = [
-  { value: '1h', label: '1 hour' },
-  { value: '12h', label: '12 hours' },
-  { value: '24h', label: '24 hours' },
-  { value: '7d', label: '7 days' },
-]
+const LOOKBACK_VALUES = ['1h', '12h', '24h', '7d'] as const
 
 // ==================== Article Row ====================
 
 function ArticleRow({ article }: { article: NewsArticle }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const contentPreview = article.content.length > 160
     ? article.content.slice(0, 160) + '...'
@@ -64,7 +61,7 @@ function ArticleRow({ article }: { article: NewsArticle }) {
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1 text-[12px] text-accent hover:underline"
             >
-              Open original
+              {t('news.openOriginal')}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                 <polyline points="15 3 21 3 21 9" />
@@ -85,6 +82,7 @@ function ArticleRow({ article }: { article: NewsArticle }) {
 // ==================== Page ====================
 
 export function NewsPage() {
+  const { t } = useTranslation()
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [lookback, setLookback] = useState('24h')
   const [sourceFilter, setSourceFilter] = useState('')
@@ -126,7 +124,7 @@ export function NewsPage() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <PageHeader title="News" />
+      <PageHeader title={t('news.title')} />
 
       <div className="flex-1 flex flex-col min-h-0 px-4 md:px-6 py-5">
         <div className="flex flex-col gap-3 h-full">
@@ -137,8 +135,8 @@ export function NewsPage() {
               onChange={(e) => setLookback(e.target.value)}
               className="bg-bg-tertiary text-text text-sm rounded-md border border-border px-2 py-1.5 outline-none focus:border-accent"
             >
-              {LOOKBACK_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+              {LOOKBACK_VALUES.map((v) => (
+                <option key={v} value={v}>{t(`news.lookback.${v}`)}</option>
               ))}
             </select>
 
@@ -147,23 +145,23 @@ export function NewsPage() {
               onChange={(e) => setSourceFilter(e.target.value)}
               className="bg-bg-tertiary text-text text-sm rounded-md border border-border px-2 py-1.5 outline-none focus:border-accent"
             >
-              <option value="">All sources</option>
+              <option value="">{t('news.allSources')}</option>
               {sources.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
 
             <span className="text-xs text-text-muted ml-auto">
-              {articles.length} article{articles.length !== 1 ? 's' : ''}
+              {t('news.articleCount', { count: articles.length })}
             </span>
           </div>
 
           {/* Article list */}
           <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border border-border bg-bg">
             {loading && articles.length === 0 ? (
-              <div className="px-4 py-8 text-center text-text-muted">Loading...</div>
+              <div className="px-4 py-8 text-center text-text-muted">{t('news.loading')}</div>
             ) : articles.length === 0 ? (
-              <EmptyState title="No articles" description="No news articles found for this time range." />
+              <EmptyState title={t('news.empty')} description={t('news.emptyHint')} />
             ) : (
               <div className="divide-y divide-border/50">
                 {[...articles].reverse().map((article, i) => (

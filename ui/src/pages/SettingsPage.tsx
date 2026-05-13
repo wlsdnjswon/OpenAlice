@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, type AppConfig } from '../api'
 import type { ToolInfo } from '../api/tools'
 import { Toggle } from '../components/Toggle'
@@ -7,10 +8,12 @@ import { ConfigSection, Field, inputClass } from '../components/form'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { PageHeader } from '../components/PageHeader'
 import { PageLoading, EmptyState } from '../components/StateViews'
+import { LanguageSwitcher } from '../components/LanguageSwitcher'
 
 // ==================== Settings Section ====================
 
 function SettingsSection() {
+  const { t } = useTranslation()
   const [config, setConfig] = useState<AppConfig | null>(null)
 
   useEffect(() => {
@@ -22,17 +25,36 @@ function SettingsSection() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-[880px] mx-auto">
+        {/* Display / Language */}
+        <ConfigSection
+          title={t('settings.sections.display.title')}
+          description={t('settings.sections.display.description')}
+        >
+          <div className="flex items-center justify-between gap-4 py-1">
+            <div className="flex-1">
+              <span className="text-sm font-medium text-text">{t('settings.language')}</span>
+              <p className="text-[12px] text-text-muted mt-0.5 leading-relaxed">
+                {t('settings.languageDescription')}
+              </p>
+            </div>
+            <LanguageSwitcher />
+          </div>
+        </ConfigSection>
+
         {/* Agent */}
-        <ConfigSection title="Agent" description="Controls file-system and tool permissions for the AI. Changes apply on the next request.">
+        <ConfigSection
+          title={t('settings.sections.agent.title')}
+          description={t('settings.sections.agent.description')}
+        >
           <div className="flex items-center justify-between gap-4 py-1">
             <div className="flex-1">
               <span className="text-sm font-medium text-text">
-                Evolution Mode
+                {t('settings.evolutionMode')}
               </span>
               <p className="text-[12px] text-text-muted mt-0.5 leading-relaxed">
                 {config.agent?.evolutionMode
-                  ? 'Full project access — AI can modify source code'
-                  : 'Sandbox mode — AI can only edit data/brain/'}
+                  ? t('settings.evolutionModeOn')
+                  : t('settings.evolutionModeOff')}
               </p>
             </div>
             <Toggle
@@ -50,12 +72,18 @@ function SettingsSection() {
         </ConfigSection>
 
         {/* Persona */}
-        <ConfigSection title="Persona" description="The system prompt that defines Alice's personality and behavior. Changes take effect on next server restart.">
+        <ConfigSection
+          title={t('settings.sections.persona.title')}
+          description={t('settings.sections.persona.description')}
+        >
           <PersonaEditor />
         </ConfigSection>
 
         {/* Compaction */}
-        <ConfigSection title="Compaction" description="Context window management. When conversation size approaches Max Context minus Max Output tokens, older messages are automatically summarized to free up space.">
+        <ConfigSection
+          title={t('settings.sections.compaction.title')}
+          description={t('settings.sections.compaction.description')}
+        >
           <CompactionForm config={config} />
         </ConfigSection>
       </div>
@@ -66,6 +94,7 @@ function SettingsSection() {
 // ==================== Compaction Form ====================
 
 function CompactionForm({ config }: { config: AppConfig }) {
+  const { t } = useTranslation()
   const [ctx, setCtx] = useState(String(config.compaction?.maxContextTokens || ''))
   const [out, setOut] = useState(String(config.compaction?.maxOutputTokens || ''))
 
@@ -82,10 +111,10 @@ function CompactionForm({ config }: { config: AppConfig }) {
 
   return (
     <>
-      <Field label="Max Context Tokens">
+      <Field label={t('settings.maxContextTokens')}>
         <input className={inputClass} type="number" step={1000} value={ctx} onChange={(e) => setCtx(e.target.value)} />
       </Field>
-      <Field label="Max Output Tokens">
+      <Field label={t('settings.maxOutputTokens')}>
         <input className={inputClass} type="number" step={1000} value={out} onChange={(e) => setOut(e.target.value)} />
       </Field>
       <SaveIndicator status={status} onRetry={retry} />
@@ -96,6 +125,7 @@ function CompactionForm({ config }: { config: AppConfig }) {
 // ==================== Persona Editor ====================
 
 function PersonaEditor() {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [filePath, setFilePath] = useState('')
   const [loading, setLoading] = useState(true)
@@ -110,9 +140,9 @@ function PersonaEditor() {
         setContent(content)
         setFilePath(path)
       })
-      .catch(() => setError('Failed to load persona'))
+      .catch(() => setError(t('errors.failedToLoad')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   const handleSave = async () => {
     setSaving(true)
@@ -124,13 +154,13 @@ function PersonaEditor() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      setError('Failed to save')
+      setError(t('errors.failedToSave'))
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <div className="text-sm text-text-muted">Loading...</div>
+  if (loading) return <div className="text-sm text-text-muted">{t('common.loading')}</div>
 
   return (
     <>
@@ -145,12 +175,12 @@ function PersonaEditor() {
           disabled={saving || !dirty}
           className="btn-primary-sm"
         >
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
         {saved && (
           <span className="inline-flex items-center gap-1.5 text-[11px]">
             <span className="w-1.5 h-1.5 rounded-full bg-green" />
-            <span className="text-text-muted">Saved</span>
+            <span className="text-text-muted">{t('common.saved')}</span>
           </span>
         )}
         {error && (
@@ -160,7 +190,7 @@ function PersonaEditor() {
           </span>
         )}
         {dirty && !saved && !error && (
-          <span className="text-[11px] text-text-muted">Unsaved changes</span>
+          <span className="text-[11px] text-text-muted">{t('common.unsavedChanges')}</span>
         )}
       </div>
       {filePath && <p className="text-[11px] text-text-muted mt-1">{filePath}</p>}
@@ -170,28 +200,8 @@ function PersonaEditor() {
 
 // ==================== Tools Section ====================
 
-const GROUP_LABELS: Record<string, string> = {
-  thinking: 'Thinking Kit',
-  brain: 'Brain',
-  browser: 'Browser',
-  cron: 'Cron Scheduler',
-  equity: 'Equity Data',
-  'crypto-data': 'Crypto Data',
-  'currency-data': 'Currency Data',
-  news: 'News',
-  'news-archive': 'News Archive',
-  analysis: 'Analysis Kit',
-  'crypto-trading': 'Crypto Trading',
-  'securities-trading': 'Securities Trading',
-}
-
-interface ToolGroup {
-  key: string
-  label: string
-  tools: ToolInfo[]
-}
-
 function ToolsSection() {
+  const { t } = useTranslation()
   const [inventory, setInventory] = useState<ToolInfo[]>([])
   const [disabled, setDisabled] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
@@ -205,18 +215,18 @@ function ToolsSection() {
     }).catch(() => {})
   }, [])
 
-  const groups = useMemo<ToolGroup[]>(() => {
+  const groups = useMemo(() => {
     const map = new Map<string, ToolInfo[]>()
-    for (const t of inventory) {
-      if (!map.has(t.group)) map.set(t.group, [])
-      map.get(t.group)!.push(t)
+    for (const tool of inventory) {
+      if (!map.has(tool.group)) map.set(tool.group, [])
+      map.get(tool.group)!.push(tool)
     }
     return Array.from(map.entries()).map(([key, tools]) => ({
       key,
-      label: GROUP_LABELS[key] ?? key,
+      label: t(`settings.toolGroups.${key}`, { defaultValue: key }),
       tools: tools.sort((a, b) => a.name.localeCompare(b.name)),
     }))
-  }, [inventory])
+  }, [inventory, t])
 
   const configData = useMemo(
     () => ({ disabled: [...disabled].sort() }),
@@ -241,9 +251,9 @@ function ToolsSection() {
   const toggleGroup = useCallback((tools: ToolInfo[], enable: boolean) => {
     setDisabled((prev) => {
       const next = new Set(prev)
-      for (const t of tools) {
-        if (enable) next.delete(t.name)
-        else next.add(t.name)
+      for (const tool of tools) {
+        if (enable) next.delete(tool.name)
+        else next.add(tool.name)
       }
       return next
     })
@@ -263,12 +273,15 @@ function ToolsSection() {
       {!loaded ? (
         <PageLoading />
       ) : groups.length === 0 ? (
-        <EmptyState title="No tools registered." description="Tools will appear here when the engine starts." />
+        <EmptyState
+          title={t('settings.tools.empty')}
+          description={t('settings.tools.emptyHint')}
+        />
       ) : (
         <div className="max-w-[880px] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[13px] text-text-muted">
-              {inventory.length} tools in {groups.length} groups — changes apply on next AI request
+              {t('settings.tools.summary', { count: inventory.length, groups: groups.length })}
             </p>
             <SaveIndicator status={status} onRetry={retry} />
           </div>
@@ -294,7 +307,7 @@ function ToolsSection() {
 // ==================== ToolGroupCard ====================
 
 interface ToolGroupCardProps {
-  group: ToolGroup
+  group: { key: string; label: string; tools: ToolInfo[] }
   disabled: Set<string>
   expanded: boolean
   onToggleExpanded: () => void
@@ -303,19 +316,13 @@ interface ToolGroupCardProps {
 }
 
 function ToolGroupCard({
-  group,
-  disabled,
-  expanded,
-  onToggleExpanded,
-  onToggleTool,
-  onToggleGroup,
+  group, disabled, expanded, onToggleExpanded, onToggleTool, onToggleGroup,
 }: ToolGroupCardProps) {
   const enabledCount = group.tools.filter((t) => !disabled.has(t.name)).length
   const noneEnabled = enabledCount === 0
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      {/* Group header */}
       <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-secondary">
         <button
           onClick={onToggleExpanded}
@@ -339,36 +346,28 @@ function ToolGroupCard({
           onChange={(v) => onToggleGroup(group.tools, v)}
         />
       </div>
-
-      {/* Tool list */}
       <div
         className={`transition-all duration-150 ${
           expanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
         } overflow-hidden`}
       >
         <div className="divide-y divide-border">
-          {group.tools.map((t) => {
-            const enabled = !disabled.has(t.name)
+          {group.tools.map((tool) => {
+            const enabled = !disabled.has(tool.name)
             return (
               <div
-                key={t.name}
-                className={`flex items-center gap-3 px-4 py-2 ${
-                  enabled ? '' : 'opacity-50'
-                }`}
+                key={tool.name}
+                className={`flex items-center gap-3 px-4 py-2 ${enabled ? '' : 'opacity-50'}`}
               >
                 <div className="flex-1 min-w-0">
-                  <span className="text-[13px] text-text font-mono">{t.name}</span>
-                  {t.description && (
+                  <span className="text-[13px] text-text font-mono">{tool.name}</span>
+                  {tool.description && (
                     <p className="text-[11px] text-text-muted mt-0.5 line-clamp-1">
-                      {t.description}
+                      {tool.description}
                     </p>
                   )}
                 </div>
-                <Toggle
-                  size="sm"
-                  checked={enabled}
-                  onChange={() => onToggleTool(t.name)}
-                />
+                <Toggle size="sm" checked={enabled} onChange={() => onToggleTool(tool.name)} />
               </div>
             )
           })}
@@ -382,30 +381,31 @@ function ToolGroupCard({
 
 type Tab = 'settings' | 'tools'
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'settings', label: 'Settings' },
-  { key: 'tools', label: 'Tools' },
-]
-
 export function SettingsPage() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('settings')
+
+  const TABS: { key: Tab; label: string }[] = [
+    { key: 'settings', label: t('settings.tabs.settings') },
+    { key: 'tools',    label: t('settings.tabs.tools') },
+  ]
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <PageHeader title="Settings" />
+      <PageHeader title={t('settings.title')} />
 
       <div className="px-4 md:px-6 border-b border-border/60">
         <div className="flex gap-1">
-          {TABS.map((t) => (
+          {TABS.map((tabItem) => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+              key={tabItem.key}
+              onClick={() => setTab(tabItem.key)}
               className={`px-3 py-2 text-sm font-medium transition-colors relative ${
-                tab === t.key ? 'text-accent' : 'text-text-muted hover:text-text'
+                tab === tabItem.key ? 'text-accent' : 'text-text-muted hover:text-text'
               }`}
             >
-              {t.label}
-              {tab === t.key && (
+              {tabItem.label}
+              {tab === tabItem.key && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent rounded-t" />
               )}
             </button>

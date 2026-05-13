@@ -11,14 +11,42 @@
     "agent": "Agent",
     "system": "System"
   },
+  "sidebar": {
+    "chat": "Chat",
+    "tradingAsGit": "Trading as Git",
+    "settings": "Settings",
+    "dev": "Dev",
+    "market": "Market",
+    "portfolio": "Portfolio",
+    "automation": "Automation",
+    "news": "News"
+  },
+  "settingsCategories": {
+    "general": "General",
+    "aiProvider": "AI Provider",
+    "tradingAccounts": "Trading Accounts",
+    "connectors": "Connectors",
+    "marketData": "Market Data",
+    "newsSources": "News Sources"
+  },
   "market": {
     "title": "Market",
     "description": "Search assets and view price history.",
-    "searchPlaceholder": "Search assets — AAPL, bitcoin, EUR, gold…",
+    "searchPlaceholder": "Search — AAPL, 삼성전자, bitcoin, EUR, gold…",
     "pickAsset": "Pick an asset to begin.",
-    "pickAssetHint": "Search by ticker or name. Equities show profile, quote, candles, key metrics, and financial statements. Other asset classes show price history only for now.",
+    "pickAssetHint": "Search by ticker or name. Equities (US, KR), crypto, currencies, and commodities are all supported.",
     "searching": "Searching…",
     "noMatches": "No matches",
+    "status": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "exchanges": {
+      "krx": "KRX",
+      "nyse": "NYSE",
+      "kospi": "KOSPI",
+      "kosdaq": "KOSDAQ"
+    },
     "assetClass": {
       "equity": "equity",
       "crypto": "crypto",
@@ -28,13 +56,245 @@
   },
   "settings": {
     "title": "Settings",
+    "tabs": {
+      "settings": "Settings",
+      "tools": "Tools"
+    },
+    "sections": {
+      "display": {
+        "title": "Display",
+        "description": "Language and appearance preferences."
+      },
+      "agent": {
+        "title": "Agent",
+        "description": "Controls file-system and tool permissions for the AI. Changes apply on the next request."
+      },
+      "persona": {
+        "title": "Persona",
+        "description": "The system prompt that defines Alice's personality and behavior. Changes take effect on next server restart."
+      },
+      "compaction": {
+        "title": "Compaction",
+        "description": "Context window management. When conversation size approaches Max Context minus Max Output tokens, older messages are automatically summarized."
+      }
+    },
     "language": "Language",
-    "languageDescription": "Choose your preferred display language"
+    "languageDescription": "Choose your preferred display language",
+    "evolutionMode": "Evolution Mode",
+    "evolutionModeOn": "Full project access — AI can modify source code",
+    "evolutionModeOff": "Sandbox mode — AI can only edit data/brain/",
+    "maxContextTokens": "Max Context Tokens",
+    "maxOutputTokens": "Max Output Tokens",
+    "tools": {
+      "empty": "No tools registered.",
+      "emptyHint": "Tools will appear here when the engine starts.",
+      "summary": "{{count}} tools in {{groups}} groups — changes apply on next AI request"
+    },
+    "toolGroups": {
+      "thinking": "Thinking Kit",
+      "brain": "Brain",
+      "browser": "Browser",
+      "cron": "Cron Scheduler",
+      "equity": "Equity Data",
+      "crypto-data": "Crypto Data",
+      "currency-data": "Currency Data",
+      "news": "News",
+      "news-archive": "News Archive",
+      "analysis": "Analysis Kit",
+      "market-search": "Market Search",
+      "crypto-trading": "Crypto Trading",
+      "securities-trading": "Securities Trading",
+      "trading": "Trading",
+      "economy": "Economy Data",
+      "notify": "Notifications"
+    }
+  },
+  "trading": {
+    "title": "Trading",
+    "description": "Configure your UTAs (Unified Trading Accounts).",
+    "accounts": "Trading Accounts",
+    "addUta": "+ Add UTA",
+    "noUtasTitle": "No UTAs configured",
+    "noUtasHint": "Connect a crypto exchange or brokerage to start automated trading.",
+    "portfolio": "Total Portfolio · USD",
+    "cash": "Cash",
+    "unrealized": "Unrealized",
+    "paper": "Paper",
+    "live": "Live",
+    "disabled": "Disabled",
+    "reconnecting": "Reconnecting…",
+    "positions": "Positions",
+    "noPositions": "No open positions — connection works, account is empty.",
+    "liveDataUnavailable": "live data unavailable",
+    "table": {
+      "contract": "Contract",
+      "side": "Side",
+      "qty": "Qty",
+      "mktValue": "Mkt Value",
+      "netLiq": "Net Liquidation",
+      "unrealizedPnl": "Unrealized P&L",
+      "short": "SHORT"
+    },
+    "wizard": {
+      "stepPlatform": "New UTA · Pick Platform",
+      "stepConfigure": "New UTA · Configure",
+      "stepTest": "New UTA · Test",
+      "recommended": "Recommended",
+      "crypto": "Crypto",
+      "testing": "Testing",
+      "namePlaceholder": "e.g. okx-main",
+      "nameLabel": "Name",
+      "nameHint": "Display label for this account. The unique id is derived automatically from the credentials below.",
+      "showSecrets": "Show secrets",
+      "hideSecrets": "Hide secrets",
+      "pickPlatform": "Pick a platform to continue",
+      "back": "← Back",
+      "testConnection": "Test Connection →",
+      "saveUta": "Save UTA",
+      "fixConfig": "Fix the config and try again",
+      "alreadyConfigured": "Broker already configured",
+      "connectionFailed": "Connection failed",
+      "connectedAs": "Connected as",
+      "openExisting": "Open existing"
+    },
+    "status": {
+      "loading": "Loading…",
+      "loadError": "Failed to load trading configuration.",
+      "retry": "Retry",
+      "testing": "Testing connection…",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "unsaved": "Unsaved changes",
+      "saveFailed": "Save failed"
+    }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "description": "Live portfolio overview across all trading accounts.",
+    "refresh": "Refresh",
+    "totalEquity": "Total Equity · USD",
+    "totalPortfolio": "Total Portfolio · USD",
+    "cash": "Cash",
+    "unrealized": "Unrealized PnL",
+    "unrealizedShort": "unrealized",
+    "realized": "Realized PnL",
+    "today": "today",
+    "noAccounts": "No trading accounts connected.",
+    "noAccountsHint": "Configure connections in the Trading page.",
+    "noPositions": "No open positions.",
+    "loadError": "Unable to load portfolio data.",
+    "positions": "Positions",
+    "recentTrades": "Recent Trades",
+    "disabled": "Disabled",
+    "reconnecting": "Reconnecting…",
+    "snapshots": "Snapshots",
+    "fxRates": "FX Rates",
+    "fxNote": "per 1 unit → USD",
+    "saveFailed": "save failed",
+    "table": {
+      "symbol": "Symbol",
+      "ccy": "Ccy",
+      "qty": "Qty",
+      "avgCost": "Avg Cost",
+      "current": "Current",
+      "mktValue": "Mkt Value",
+      "usdValue": "USD Value",
+      "pnl": "PnL",
+      "pnlPct": "PnL %",
+      "short": "SHORT"
+    },
+    "intervals": {
+      "1m": "1m",
+      "5m": "5m",
+      "15m": "15m",
+      "30m": "30m",
+      "1h": "1h",
+      "custom": "Custom"
+    }
+  },
+  "automation": {
+    "title": "Automation",
+    "sections": {
+      "flow": {
+        "title": "Flow",
+        "description": "Visual event flow — see how events move through Alice's listener pipeline in real time."
+      },
+      "heartbeat": {
+        "title": "Heartbeat",
+        "description": "Periodic self-check and autonomous thinking. Alice wakes up on a schedule and reflects on her state.",
+        "triggerNow": "Trigger Now"
+      },
+      "cronJobs": {
+        "title": "Cron Jobs",
+        "description": "Schedule recurring tasks. Each job fires a task event on its cron expression.",
+        "loading": "Loading cron jobs…",
+        "empty": "No cron jobs",
+        "trigger": "Trigger",
+        "delete": "Delete"
+      },
+      "webhook": {
+        "title": "Webhook",
+        "description": "Ingest external events over HTTP. Use the token for authentication."
+      }
+    },
+    "heartbeat": {
+      "triggered": "Heartbeat triggered!",
+      "toggleFailed": "Failed to toggle heartbeat",
+      "interval": "Interval",
+      "activeHours": "Active Hours",
+      "start": "Start",
+      "end": "End",
+      "timezone": "Timezone",
+      "configTitle": "Configuration",
+      "configDescription": "Set how often the heartbeat runs and optionally restrict it to active hours.",
+      "promptFileTitle": "Prompt File"
+    },
+    "cron": {
+      "addJob": "+ Add Job",
+      "newJob": "New Cron Job",
+      "jobCount": "{{count}} jobs",
+      "jobName": "Job name",
+      "payloadLabel": "Payload / instruction text",
+      "creating": "Creating…",
+      "lastRun": "Last run",
+      "never": "never",
+      "nextRun": "next",
+      "statusLabel": "Status",
+      "createdLabel": "Created",
+      "payloadExpanded": "Payload"
+    },
+    "status": {
+      "loading": "Loading…",
+      "saved": "Saved",
+      "saving": "Saving…"
+    }
+  },
+  "chat": {
+    "loadingHistory": "Loading older messages…",
+    "historyStart": "— beginning of history —",
+    "emptyHint": "Send a message to start chatting"
+  },
+  "news": {
+    "title": "News",
+    "allSources": "All sources",
+    "loading": "Loading…",
+    "empty": "No articles",
+    "emptyHint": "No news articles found for this time range.",
+    "openOriginal": "Open original",
+    "articleCount": "{{count}} articles",
+    "lookback": {
+      "1h": "1 hour",
+      "12h": "12 hours",
+      "24h": "24 hours",
+      "7d": "7 days"
+    }
   },
   "common": {
     "loading": "Loading…",
     "error": "Error",
     "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "delete": "Delete",
@@ -44,20 +304,18 @@
     "back": "Back",
     "next": "Next",
     "search": "Search",
-    "openAlice": "OpenAlice"
-  },
-  "trading": {
-    "title": "Trading",
-    "accounts": "Accounts",
-    "addAccount": "Add Account",
-    "noAccounts": "No trading accounts configured.",
-    "paper": "Paper",
-    "live": "Live"
+    "retry": "Retry",
+    "unsavedChanges": "Unsaved changes",
+    "openAlice": "OpenAlice",
+    "failedToLoad": "Failed to load",
+    "noData": "No data available"
   },
   "errors": {
     "networkError": "Network error. Please try again.",
     "apiKeyMissing": "API key not configured.",
     "marketClosed": "Market is currently closed.",
-    "unknown": "An unexpected error occurred."
+    "unknown": "An unexpected error occurred.",
+    "failedToLoad": "Failed to load data.",
+    "failedToSave": "Failed to save."
   }
 }

@@ -76,7 +76,13 @@
       "rollup": "^4.59.0",
       "vitest>vite": "^7.3.2",
       "@vitest/mocker>vite": "^7.3.2"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "ccxt",
+      "esbuild",
+      "protobufjs",
+      "sharp"
+    ]
   },
   "devDependencies": {
     "@ai-sdk/provider": "^3.0.8",

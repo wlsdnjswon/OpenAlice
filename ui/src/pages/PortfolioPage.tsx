@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, type Position, type WalletCommitLog, type EquityCurvePoint, type UTASnapshotSummary } from '../api'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useAccountHealth } from '../hooks/useAccountHealth'
@@ -103,6 +104,7 @@ function summarizeAggregateCurve(points: EquityCurvePoint[]): CurveSummary {
 // ==================== Page ====================
 
 export function PortfolioPage() {
+  const { t } = useTranslation()
   const healthMap = useAccountHealth()
   const [data, setData] = useState<PortfolioData>(EMPTY)
   const [loading, setLoading] = useState(true)
@@ -217,8 +219,8 @@ export function PortfolioPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <PageHeader
-        title="Portfolio"
-        description="Live portfolio overview across all trading accounts."
+        title={t('portfolio.title')}
+        description={t('portfolio.description')}
         live={{ lastUpdated: lastRefresh }}
         right={
           <button
@@ -226,7 +228,7 @@ export function PortfolioPage() {
             disabled={loading}
             className="btn-secondary-sm"
           >
-            {loading ? 'Loading...' : 'Refresh'}
+            {loading ? t('common.loading') : t('portfolio.refresh')}
           </button>
         }
       />
@@ -277,10 +279,10 @@ export function PortfolioPage() {
 
             {/* Empty states */}
             {data.accounts.length === 0 && !loading && (
-              <EmptyState title="No trading accounts connected." description="Configure connections in the Trading page." />
+              <EmptyState title={t('portfolio.noAccounts')} description={t('portfolio.noAccountsHint')} />
             )}
             {data.accounts.length > 0 && allPositions.length === 0 && !loading && (
-              <EmptyState title="No open positions." />
+              <EmptyState title={t('portfolio.noPositions')} />
             )}
 
             {allWalletLogs.length > 0 && (
@@ -340,10 +342,11 @@ function HeroMetrics({ equity, curve }: {
   equity: AggregatedEquity | null
   curve: { values: number[]; firstAtCutoff: number | null; latest: number | null } | null
 }) {
+  const { t } = useTranslation()
   if (!equity) {
     return (
       <div className="border border-border rounded-lg bg-bg-secondary p-5 text-center">
-        <p className="text-[13px] text-text-muted">Unable to load portfolio data.</p>
+        <p className="text-[13px] text-text-muted">{t('portfolio.loadError')}</p>
       </div>
     )
   }
@@ -360,7 +363,7 @@ function HeroMetrics({ equity, curve }: {
     const delta = curve.latest - curve.firstAtCutoff
     const pct = curve.firstAtCutoff !== 0 ? (delta / curve.firstAtCutoff) * 100 : 0
     todayDelta = {
-      value: `${fmtPnl(delta, 'USD')} (${fmtPctSigned(pct)}) today`,
+      value: `${fmtPnl(delta, 'USD')} (${fmtPctSigned(pct)}) ${t('portfolio.today')}`,
       sign: signFromDelta(delta),
     }
   }
@@ -369,21 +372,21 @@ function HeroMetrics({ equity, curve }: {
     <div className="border border-border rounded-lg bg-bg-secondary px-5 py-5 space-y-4">
       <Metric
         size="lg"
-        label="Total Equity · USD"
+        label={t('portfolio.totalEquity')}
         value={fmt(total, 'USD')}
-        delta={todayDelta ?? { value: '— today', sign: 'flat' }}
+        delta={todayDelta ?? { value: `— ${t('portfolio.today')}`, sign: 'flat' }}
       />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-        <Metric size="sm" label="Cash" value={fmt(cash, 'USD')} />
+        <Metric size="sm" label={t('portfolio.cash')} value={fmt(cash, 'USD')} />
         <Metric
           size="sm"
-          label="Unrealized PnL"
+          label={t('portfolio.unrealized')}
           value={fmtPnl(unrealized, 'USD')}
           valueSign={signFromDelta(unrealized)}
         />
         <Metric
           size="sm"
-          label="Realized PnL"
+          label={t('portfolio.realized')}
           value={fmtPnl(realized, 'USD')}
           valueSign={signFromDelta(realized)}
         />
@@ -404,6 +407,7 @@ function AccountStrip({ sources, perAccountCurve }: {
   sources: Array<{ id: string; label: string; provider: string; equity: string; unrealizedPnL: number; error?: string; health?: string; disabled?: boolean }>
   perAccountCurve: Record<string, { values: number[]; firstAtCutoff: number | null; latest: number | null }>
 }) {
+  const { t } = useTranslation()
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
       {sources.map(s => {
@@ -431,18 +435,18 @@ function AccountStrip({ sources, perAccountCurve }: {
               </div>
               <div className="flex items-baseline justify-between gap-2 mt-0.5">
                 {isDisabled
-                  ? <span className="text-text-muted text-[11px]">Disabled</span>
+                  ? <span className="text-text-muted text-[11px]">{t('portfolio.disabled')}</span>
                   : isOffline
-                    ? <span className="text-red text-[11px]">Reconnecting…</span>
+                    ? <span className="text-red text-[11px]">{t('portfolio.reconnecting')}</span>
                     : (
                       <span className="text-[11px] tabular-nums">
                         {todayDelta != null && Number.isFinite(todayDelta) ? (
                           <span className={todayDelta >= 0 ? 'text-green' : 'text-red'}>
-                            {todayDelta >= 0 ? '▲' : '▼'} {fmtPnl(todayDelta)} today
+                            {todayDelta >= 0 ? '▲' : '▼'} {fmtPnl(todayDelta)} {t('portfolio.today')}
                           </span>
                         ) : s.unrealizedPnL !== 0 ? (
                           <span className={s.unrealizedPnL >= 0 ? 'text-green' : 'text-red'}>
-                            {fmtPnl(s.unrealizedPnL)} unrealized
+                            {fmtPnl(s.unrealizedPnL)} {t('portfolio.unrealizedShort')}
                           </span>
                         ) : (
                           <span className="text-text-muted/60">—</span>
@@ -503,27 +507,28 @@ function contractDisplay(p: Position): { name: string; tag: string } {
 }
 
 function PositionsTable({ positions, fxRates }: { positions: PositionWithAccount[]; fxRates: FxRateInfo[] }) {
+  const { t } = useTranslation()
   const rateMap = Object.fromEntries(fxRates.map(r => [r.currency, r.rate]))
   const hasNonUsd = positions.some(p => p.currency && p.currency !== 'USD')
 
   return (
     <div>
       <h3 className="text-[13px] font-semibold text-text-muted uppercase tracking-wide mb-3">
-        Positions
+        {t('portfolio.positions')}
       </h3>
       <div className="border border-border rounded-lg overflow-x-auto">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="bg-bg-secondary text-text-muted text-left">
-              <th className="px-3 py-2 font-medium">Symbol</th>
-              <th className="px-3 py-2 font-medium text-center">Ccy</th>
-              <th className="px-3 py-2 font-medium text-right">Qty</th>
-              <th className="px-3 py-2 font-medium text-right">Avg Cost</th>
-              <th className="px-3 py-2 font-medium text-right">Current</th>
-              <th className="px-3 py-2 font-medium text-right">Mkt Value</th>
-              {hasNonUsd && <th className="px-3 py-2 font-medium text-right">USD Value</th>}
-              <th className="px-3 py-2 font-medium text-right">PnL</th>
-              <th className="px-3 py-2 font-medium text-right">PnL %</th>
+              <th className="px-3 py-2 font-medium">{t('portfolio.table.symbol')}</th>
+              <th className="px-3 py-2 font-medium text-center">{t('portfolio.table.ccy')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.qty')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.avgCost')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.current')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.mktValue')}</th>
+              {hasNonUsd && <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.usdValue')}</th>}
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.pnl')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('portfolio.table.pnlPct')}</th>
             </tr>
           </thead>
           <tbody>
@@ -579,10 +584,11 @@ function PositionsTable({ positions, fxRates }: { positions: PositionWithAccount
 // ==================== FX Rates Panel ====================
 
 function FxRatesPanel({ rates }: { rates: FxRateInfo[] }) {
+  const { t } = useTranslation()
   return (
     <div>
       <h3 className="text-[11px] font-semibold text-text-muted uppercase tracking-wide mb-2">
-        FX Rates
+        {t('portfolio.fxRates')}
       </h3>
       <div className="border border-border rounded-lg overflow-hidden">
         <table className="w-full text-[12px]">
@@ -601,7 +607,7 @@ function FxRatesPanel({ rates }: { rates: FxRateInfo[] }) {
           </tbody>
         </table>
       </div>
-      <p className="text-[10px] text-text-muted/50 mt-1.5 text-right">per 1 unit → USD</p>
+      <p className="text-[10px] text-text-muted/50 mt-1.5 text-right">{t('portfolio.fxNote')}</p>
     </div>
   )
 }
@@ -614,6 +620,7 @@ interface CommitWithAccount extends WalletCommitLog {
 }
 
 function TradeLog({ commits }: { commits: CommitWithAccount[] }) {
+  const { t } = useTranslation()
   const sorted = [...commits]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 10)
@@ -623,7 +630,7 @@ function TradeLog({ commits }: { commits: CommitWithAccount[] }) {
   return (
     <div>
       <h3 className="text-[13px] font-semibold text-text-muted uppercase tracking-wide mb-3">
-        Recent Trades
+        {t('portfolio.recentTrades')}
       </h3>
       <div className="space-y-2">
         {sorted.map((commit) => {
@@ -685,12 +692,13 @@ function SnapshotSettings({ enabled, every, onEnabledChange, onEveryChange, save
   onEveryChange: (v: string) => void
   saveStatus: string
 }) {
+  const { t } = useTranslation()
   const isPreset = INTERVAL_PRESETS.some(p => p.value === every)
   const [showCustom, setShowCustom] = useState(!isPreset)
 
   return (
     <div className="flex items-center gap-3 text-[12px] text-text-muted">
-      <span className="font-medium uppercase tracking-wide">Snapshots</span>
+      <span className="font-medium uppercase tracking-wide">{t('portfolio.snapshots')}</span>
       <Toggle checked={enabled} onChange={onEnabledChange} size="sm" />
       <div className="flex gap-0.5">
         {INTERVAL_PRESETS.map(p => (
@@ -714,7 +722,7 @@ function SnapshotSettings({ enabled, every, onEnabledChange, onEveryChange, save
               : 'hover:text-text hover:bg-bg-tertiary'
           }`}
         >
-          Custom
+          {t('portfolio.intervals.custom')}
         </button>
       </div>
       {showCustom && (
@@ -725,8 +733,8 @@ function SnapshotSettings({ enabled, every, onEnabledChange, onEveryChange, save
           placeholder="e.g. 2h"
         />
       )}
-      {saveStatus === 'saving' && <span className="text-accent text-[10px]">saving...</span>}
-      {saveStatus === 'error' && <span className="text-red text-[10px]">save failed</span>}
+      {saveStatus === 'saving' && <span className="text-accent text-[10px]">{t('automation.status.saving')}</span>}
+      {saveStatus === 'error' && <span className="text-red text-[10px]">{t('portfolio.saveFailed')}</span>}
     </div>
   )
 }

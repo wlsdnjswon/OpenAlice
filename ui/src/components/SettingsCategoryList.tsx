@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useWorkspace } from '../tabs/store'
 import { getFocusedTab, type ViewSpec } from '../tabs/types'
 import { SidebarRow } from './SidebarRow'
@@ -5,31 +6,22 @@ import { SidebarRow } from './SidebarRow'
 type SettingsCategory = Extract<ViewSpec, { kind: 'settings' }>['params']['category']
 
 interface CategoryItem {
-  label: string
+  labelKey: string
   category: SettingsCategory
-  /**
-   * Other view kinds that count as "active" for this row. Used by
-   * Trading Accounts: when a uta-detail tab is focused, Trading
-   * Accounts should still light up.
-   */
   alsoActiveFor?: ViewSpec['kind'][]
 }
 
 const CATEGORIES: CategoryItem[] = [
-  { label: 'General', category: 'general' },
-  { label: 'AI Provider', category: 'ai-provider' },
-  { label: 'Trading Accounts', category: 'trading', alsoActiveFor: ['uta-detail'] },
-  { label: 'Connectors', category: 'connectors' },
-  { label: 'Market Data', category: 'market-data' },
-  { label: 'News Sources', category: 'news-collector' },
+  { labelKey: 'settingsCategories.general',        category: 'general' },
+  { labelKey: 'settingsCategories.aiProvider',     category: 'ai-provider' },
+  { labelKey: 'settingsCategories.tradingAccounts',category: 'trading', alsoActiveFor: ['uta-detail'] },
+  { labelKey: 'settingsCategories.connectors',     category: 'connectors' },
+  { labelKey: 'settingsCategories.marketData',     category: 'market-data' },
+  { labelKey: 'settingsCategories.newsSources',    category: 'news-collector' },
 ]
 
-/**
- * Settings sidebar — flat list of config categories. Click opens (or
- * focuses) the corresponding tab. Active highlight is driven by the
- * currently-focused tab's spec, not by sidebar selection.
- */
 export function SettingsCategoryList() {
+  const { t } = useTranslation()
   const focused = useWorkspace((state) => getFocusedTab(state)?.spec)
   const openOrFocus = useWorkspace((state) => state.openOrFocus)
 
@@ -42,7 +34,7 @@ export function SettingsCategoryList() {
         return (
           <SidebarRow
             key={item.category}
-            label={item.label}
+            label={t(item.labelKey)}
             active={active}
             onClick={() => openOrFocus({ kind: 'settings', params: { category: item.category } })}
           />

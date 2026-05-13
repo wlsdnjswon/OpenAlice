@@ -1,17 +1,9 @@
 /**
  * Section config — what the secondary sidebar shows for each ActivitySection.
- *
- * Sidebar selection is driven by `selectedSidebar` in the workspace store,
- * which the ActivityBar updates via `toggleSidebar`. Sidebar content is
- * decoupled from focused-tab kind: switching tabs doesn't change which
- * sidebar shows.
- *
- * Routes have moved to tabs/UrlAdopter.tsx (URL → spec adoption) and
- * tabs/registry.tsx (spec → URL projection). This file is now just the
- * activity-section → sidebar lookup.
  */
 
 import type { ComponentType } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChatChannelListContainer } from './components/ChatChannelListContainer'
 import { NewChannelButton } from './components/NewChannelButton'
 import { PushApprovalPanel } from './components/PushApprovalPanel'
@@ -24,54 +16,45 @@ import { NewsSidebar } from './components/NewsSidebar'
 import type { ActivitySection } from './tabs/types'
 
 export interface SidebarSection {
-  /** Header title shown at the top of the sidebar. */
   title: string
-  /** The actual navigator content. */
   Secondary: ComponentType
-  /** Optional right-aligned action buttons in the sidebar header (e.g. "+ new"). */
   Actions?: ComponentType
 }
 
-const SECTION_BY_KEY: Record<ActivitySection, SidebarSection> = {
-  chat: {
-    title: 'Chat',
-    Secondary: ChatChannelListContainer,
-    Actions: NewChannelButton,
-  },
-  'trading-as-git': {
-    title: 'Trading as Git',
-    Secondary: PushApprovalPanel,
-  },
-  settings: {
-    title: 'Settings',
-    Secondary: SettingsCategoryList,
-  },
-  dev: {
-    title: 'Dev',
-    Secondary: DevCategoryList,
-  },
-  market: {
-    title: 'Market',
-    Secondary: MarketSidebar,
-  },
-  portfolio: {
-    title: 'Portfolio',
-    Secondary: PortfolioSidebar,
-  },
-  automation: {
-    title: 'Automation',
-    Secondary: AutomationSidebar,
-  },
-  news: {
-    title: 'News',
-    Secondary: NewsSidebar,
-  },
+type SectionKey = ActivitySection
+
+interface RawSection {
+  titleKey: string
+  Secondary: ComponentType
+  Actions?: ComponentType
 }
 
-/** Resolve the sidebar config for the currently selected ActivitySection. */
+const RAW_SECTIONS: Record<SectionKey, RawSection> = {
+  chat:            { titleKey: 'sidebar.chat',          Secondary: ChatChannelListContainer, Actions: NewChannelButton },
+  'trading-as-git':{ titleKey: 'sidebar.tradingAsGit',  Secondary: PushApprovalPanel },
+  settings:        { titleKey: 'sidebar.settings',      Secondary: SettingsCategoryList },
+  dev:             { titleKey: 'sidebar.dev',            Secondary: DevCategoryList },
+  market:          { titleKey: 'sidebar.market',        Secondary: MarketSidebar },
+  portfolio:       { titleKey: 'sidebar.portfolio',     Secondary: PortfolioSidebar },
+  automation:      { titleKey: 'sidebar.automation',    Secondary: AutomationSidebar },
+  news:            { titleKey: 'sidebar.news',          Secondary: NewsSidebar },
+}
+
 export function findSectionForActivity(
   section: ActivitySection | null | undefined,
 ): SidebarSection | null {
   if (!section) return null
-  return SECTION_BY_KEY[section]
+  const raw = RAW_SECTIONS[section]
+  if (!raw) return null
+  // Return a placeholder; actual title resolved in useSidebarSection below.
+  return { title: raw.titleKey, Secondary: raw.Secondary, Actions: raw.Actions }
+}
+
+/** Returns the translated SidebarSection for the given activity. */
+export function useSidebarSection(section: ActivitySection | null | undefined): SidebarSection | null {
+  const { t } = useTranslation()
+  if (!section) return null
+  const raw = RAW_SECTIONS[section]
+  if (!raw) return null
+  return { title: t(raw.titleKey), Secondary: raw.Secondary, Actions: raw.Actions }
 }

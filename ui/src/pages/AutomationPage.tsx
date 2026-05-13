@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, type AppConfig, type CronJob, type CronSchedule } from '../api'
 import { Toggle } from '../components/Toggle'
 import { SaveIndicator } from '../components/SaveIndicator'
@@ -11,18 +12,11 @@ import type { ViewSpec } from '../tabs/types'
 
 type AutomationSection = Extract<ViewSpec, { kind: 'automation' }>['params']['section']
 
-const SECTION_TITLE: Record<AutomationSection, string> = {
-  flow: 'Flow',
-  heartbeat: 'Heartbeat',
-  cron: 'Cron Jobs',
-  webhook: 'Webhook',
-}
-
-const SECTION_DESCRIPTION: Record<AutomationSection, string> = {
-  flow: 'Producer-listener graph for the event bus.',
-  heartbeat: 'Periodic self-check and autonomous thinking.',
-  cron: 'Scheduled jobs that fire events on the dispatch bus.',
-  webhook: 'External HTTP triggers routed into the engine.',
+const SECTION_I18N_KEY: Record<AutomationSection, string> = {
+  flow: 'automation.sections.flow',
+  heartbeat: 'automation.sections.heartbeat',
+  cron: 'automation.sections.cronJobs',
+  webhook: 'automation.sections.webhook',
 }
 
 // ==================== Helpers ====================
@@ -54,6 +48,7 @@ function scheduleLabel(s: CronSchedule): string {
 // ==================== Heartbeat: Status Bar ====================
 
 function StatusBar() {
+  const { t } = useTranslation()
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [triggering, setTriggering] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -68,7 +63,7 @@ function StatusBar() {
       const result = await api.heartbeat.setEnabled(v)
       setEnabled(result.enabled)
     } catch {
-      setError('Failed to toggle heartbeat')
+      setError(t('automation.heartbeat.toggleFailed'))
       setTimeout(() => setError(null), 3000)
     }
   }
@@ -78,7 +73,7 @@ function StatusBar() {
     setFeedback(null)
     try {
       await api.heartbeat.trigger()
-      setFeedback('Heartbeat triggered!')
+      setFeedback(t('automation.heartbeat.triggered'))
       setTimeout(() => setFeedback(null), 3000)
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : 'Trigger failed')
@@ -94,9 +89,9 @@ function StatusBar() {
         <div className="flex items-center gap-3">
           <span className="text-lg">💓</span>
           <div>
-            <div className="text-sm font-medium text-text">Heartbeat</div>
+            <div className="text-sm font-medium text-text">{t('automation.sections.heartbeat.title')}</div>
             <div className="text-xs text-text-muted">
-              Periodic self-check and autonomous thinking
+              {t('automation.sections.heartbeat.description')}
             </div>
           </div>
         </div>
@@ -115,7 +110,7 @@ function StatusBar() {
             disabled={triggering}
             className="btn-secondary-sm"
           >
-            {triggering ? 'Triggering...' : 'Trigger Now'}
+            {triggering ? t('common.loading') : t('automation.sections.heartbeat.triggerNow')}
           </button>
 
           {enabled !== null && (
@@ -130,6 +125,7 @@ function StatusBar() {
 // ==================== Heartbeat: Config Form ====================
 
 function HeartbeatConfigForm({ config }: { config: AppConfig }) {
+  const { t } = useTranslation()
   const [every, setEvery] = useState(config.heartbeat?.every || '30m')
   const [ahEnabled, setAhEnabled] = useState(config.heartbeat?.activeHours != null)
   const [ahStart, setAhStart] = useState(config.heartbeat?.activeHours?.start || '09:00')
@@ -149,8 +145,8 @@ function HeartbeatConfigForm({ config }: { config: AppConfig }) {
   const { status, retry } = useAutoSave({ data: configData, save })
 
   return (
-    <ConfigSection title="Configuration" description="Set how often the heartbeat runs and optionally restrict it to active hours.">
-      <Field label="Interval">
+    <ConfigSection title={t('automation.heartbeat.configTitle')} description={t('automation.heartbeat.configDescription')}>
+      <Field label={t('automation.heartbeat.interval')}>
         <input
           className={inputClass}
           value={every}
@@ -161,13 +157,13 @@ function HeartbeatConfigForm({ config }: { config: AppConfig }) {
 
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-[13px] text-text font-medium">Active Hours</label>
+          <label className="text-[13px] text-text font-medium">{t('automation.heartbeat.activeHours')}</label>
           <Toggle checked={ahEnabled} onChange={setAhEnabled} />
         </div>
         {ahEnabled && (
           <div className="flex gap-2 items-end">
             <div className="flex-1">
-              <label className="block text-[11px] text-text-muted mb-1">Start</label>
+              <label className="block text-[11px] text-text-muted mb-1">{t('automation.heartbeat.start')}</label>
               <input
                 className={inputClass}
                 value={ahStart}
@@ -176,7 +172,7 @@ function HeartbeatConfigForm({ config }: { config: AppConfig }) {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-[11px] text-text-muted mb-1">End</label>
+              <label className="block text-[11px] text-text-muted mb-1">{t('automation.heartbeat.end')}</label>
               <input
                 className={inputClass}
                 value={ahEnd}
@@ -185,7 +181,7 @@ function HeartbeatConfigForm({ config }: { config: AppConfig }) {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-[11px] text-text-muted mb-1">Timezone</label>
+              <label className="block text-[11px] text-text-muted mb-1">{t('automation.heartbeat.timezone')}</label>
               <select
                 className={inputClass}
                 value={ahTimezone}
@@ -216,6 +212,7 @@ function HeartbeatConfigForm({ config }: { config: AppConfig }) {
 // ==================== Heartbeat: Prompt Editor ====================
 
 function PromptEditor() {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [filePath, setFilePath] = useState('')
   const [loading, setLoading] = useState(true)
@@ -230,7 +227,7 @@ function PromptEditor() {
         setContent(content)
         setFilePath(path)
       })
-      .catch(() => setError('Failed to load prompt file'))
+      .catch(() => setError(t('errors.failedToLoad')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -244,16 +241,16 @@ function PromptEditor() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      setError('Failed to save')
+      setError(t('errors.failedToSave'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <ConfigSection title="Prompt File" description={filePath || 'The prompt template used for each heartbeat cycle.'}>
+    <ConfigSection title={t('automation.heartbeat.promptFileTitle')} description={filePath || t('automation.sections.heartbeat.description')}>
       {loading ? (
-        <div className="text-sm text-text-muted">Loading...</div>
+        <div className="text-sm text-text-muted">{t('common.loading')}</div>
       ) : (
         <>
           <textarea
@@ -267,12 +264,12 @@ function PromptEditor() {
               disabled={saving || !dirty}
               className="btn-primary-sm"
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('common.saving') : t('common.save')}
             </button>
             {saved && (
               <span className="inline-flex items-center gap-1.5 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-green" />
-                <span className="text-text-muted">Saved</span>
+                <span className="text-text-muted">{t('common.saved')}</span>
               </span>
             )}
             {error && (
@@ -282,7 +279,7 @@ function PromptEditor() {
               </span>
             )}
             {dirty && !saved && !error && (
-              <span className="text-[11px] text-text-muted">Unsaved changes</span>
+              <span className="text-[11px] text-text-muted">{t('common.unsavedChanges')}</span>
             )}
           </div>
         </>
@@ -321,6 +318,7 @@ function HeartbeatSection() {
 // ==================== Cron Section ====================
 
 function CronSection() {
+  const { t } = useTranslation()
   const [jobs, setJobs] = useState<CronJob[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
@@ -380,7 +378,7 @@ function CronSection() {
   }
 
   if (loading) {
-    return <div className="text-text-muted text-sm py-4">Loading cron jobs...</div>
+    return <div className="text-text-muted text-sm py-4">{t('automation.sections.cronJobs.loading')}</div>
   }
 
   return (
@@ -394,12 +392,12 @@ function CronSection() {
       </div>
       {error && <div className="text-xs text-red">{error}</div>}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-text-muted">{jobs.length} jobs</span>
+        <span className="text-xs text-text-muted">{t('automation.cron.jobCount', { count: jobs.length })}</span>
         <button
           onClick={() => setShowAdd(true)}
           className="btn-secondary-sm"
         >
-          + Add Job
+          {t('automation.cron.addJob')}
         </button>
       </div>
 
@@ -411,7 +409,7 @@ function CronSection() {
       )}
 
       {jobs.length === 0 ? (
-        <div className="text-text-muted text-sm text-center py-6">No cron jobs</div>
+        <div className="text-text-muted text-sm text-center py-6">{t('automation.sections.cronJobs.empty')}</div>
       ) : (
         <div className="space-y-2">
           {jobs.map((job) => (
@@ -435,6 +433,7 @@ function CronJobCard({ job, onToggle, onRunNow, onDelete }: {
   onRunNow: () => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const isHeartbeat = job.name === '__heartbeat__'
 
@@ -496,13 +495,13 @@ function CronJobCard({ job, onToggle, onRunNow, onDelete }: {
       {expanded && (
         <div className="border-t border-border/50 px-4 py-3 text-xs space-y-2">
           <div>
-            <span className="text-text-muted">Payload: </span>
+            <span className="text-text-muted">{t('automation.cron.payloadExpanded')}: </span>
             <pre className="inline text-text whitespace-pre-wrap break-all">{job.payload}</pre>
           </div>
           <div className="flex gap-4 text-text-muted">
-            <span>Last run: {job.state.lastRunAtMs ? `${timeAgo(job.state.lastRunAtMs)} (${formatDateTime(job.state.lastRunAtMs)})` : 'never'}</span>
-            <span>Status: {job.state.lastStatus ?? 'n/a'}</span>
-            <span>Created: {formatDateTime(job.createdAt)}</span>
+            <span>{t('automation.cron.lastRun')}: {job.state.lastRunAtMs ? `${timeAgo(job.state.lastRunAtMs)} (${formatDateTime(job.state.lastRunAtMs)})` : t('automation.cron.never')}</span>
+            <span>{t('automation.cron.statusLabel')}: {job.state.lastStatus ?? 'n/a'}</span>
+            <span>{t('automation.cron.createdLabel')}: {formatDateTime(job.createdAt)}</span>
           </div>
         </div>
       )}
@@ -511,6 +510,7 @@ function CronJobCard({ job, onToggle, onRunNow, onDelete }: {
 }
 
 function AddCronJobForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [payload, setPayload] = useState('')
   const [schedKind, setSchedKind] = useState<'every' | 'cron' | 'at'>('every')
@@ -545,20 +545,20 @@ function AddCronJobForm({ onClose, onCreated }: { onClose: () => void; onCreated
   return (
     <form onSubmit={handleSubmit} className="bg-bg rounded-lg border border-accent/30 p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-text">New Cron Job</span>
+        <span className="text-sm font-medium text-text">{t('automation.cron.newJob')}</span>
         <button type="button" onClick={onClose} className="text-text-muted hover:text-text text-xs">✕</button>
       </div>
 
       <input
         type="text"
-        placeholder="Job name"
+        placeholder={t('automation.cron.jobName')}
         value={name}
         onChange={(e) => setName(e.target.value)}
         className="w-full bg-bg-tertiary border border-border rounded-md px-3 py-2 text-sm text-text outline-none focus:border-accent"
       />
 
       <textarea
-        placeholder="Payload / instruction text"
+        placeholder={t('automation.cron.payloadLabel')}
         value={payload}
         onChange={(e) => setPayload(e.target.value)}
         rows={2}
@@ -599,14 +599,14 @@ function AddCronJobForm({ onClose, onCreated }: { onClose: () => void; onCreated
           onClick={onClose}
           className="px-3 py-1.5 text-sm rounded-md text-text-muted hover:text-text hover:bg-bg-tertiary transition-colors"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={saving}
           className="btn-primary-sm"
         >
-          {saving ? 'Creating...' : 'Create'}
+          {saving ? t('automation.cron.creating') : t('common.add')}
         </button>
       </div>
     </form>
@@ -625,13 +625,15 @@ interface AutomationPageProps {
  * section is its own tab in the editor area.
  */
 export function AutomationPage({ spec }: AutomationPageProps) {
+  const { t } = useTranslation()
   const section = spec.params.section
+  const key = SECTION_I18N_KEY[section]
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <PageHeader
-        title={SECTION_TITLE[section]}
-        description={SECTION_DESCRIPTION[section]}
+        title={t(`${key}.title`)}
+        description={t(`${key}.description`)}
       />
       <div className="flex-1 flex flex-col min-h-0 px-4 md:px-6 py-5">
         <div className="flex-1 min-h-0">

@@ -2,7 +2,7 @@
   "nav": {
     "chat": "채팅",
     "portfolio": "포트폴리오",
-    "tradingAsGit": "Trading as Git",
+    "tradingAsGit": "거래 기록",
     "market": "시장",
     "news": "뉴스",
     "automation": "자동화",
@@ -11,14 +11,42 @@
     "agent": "에이전트",
     "system": "시스템"
   },
+  "sidebar": {
+    "chat": "채팅",
+    "tradingAsGit": "거래 기록",
+    "settings": "설정",
+    "dev": "개발",
+    "market": "시장",
+    "portfolio": "포트폴리오",
+    "automation": "자동화",
+    "news": "뉴스"
+  },
+  "settingsCategories": {
+    "general": "일반",
+    "aiProvider": "AI 프로바이더",
+    "tradingAccounts": "거래 계좌",
+    "connectors": "커넥터",
+    "marketData": "시장 데이터",
+    "newsSources": "뉴스 소스"
+  },
   "market": {
     "title": "시장",
     "description": "자산을 검색하고 가격 이력을 확인하세요.",
-    "searchPlaceholder": "자산 검색 — 삼성전자, 비트코인, EUR, 금…",
-    "pickAsset": "검색하여 자산을 선택하세요.",
-    "pickAssetHint": "티커 또는 종목명으로 검색하세요. 주식은 프로필, 시세, 차트, 핵심 지표, 재무제표를 확인할 수 있습니다. 다른 자산 유형은 현재 가격 이력만 제공됩니다.",
+    "searchPlaceholder": "검색 — AAPL, 삼성전자, 비트코인, EUR, 금…",
+    "pickAsset": "자산을 검색하여 선택하세요.",
+    "pickAssetHint": "티커 또는 종목명으로 검색하세요. 국내외 주식, 암호화폐, 통화, 원자재를 모두 지원합니다.",
     "searching": "검색 중…",
     "noMatches": "검색 결과 없음",
+    "status": {
+      "open": "개장",
+      "closed": "휴장"
+    },
+    "exchanges": {
+      "krx": "한국거래소",
+      "nyse": "NYSE",
+      "kospi": "코스피",
+      "kosdaq": "코스닥"
+    },
     "assetClass": {
       "equity": "주식",
       "crypto": "암호화폐",
@@ -28,13 +56,245 @@
   },
   "settings": {
     "title": "설정",
+    "tabs": {
+      "settings": "설정",
+      "tools": "도구"
+    },
+    "sections": {
+      "display": {
+        "title": "화면",
+        "description": "언어 및 표시 환경을 설정합니다."
+      },
+      "agent": {
+        "title": "에이전트",
+        "description": "AI의 파일 시스템 및 도구 권한을 제어합니다. 변경 사항은 다음 요청부터 적용됩니다."
+      },
+      "persona": {
+        "title": "페르소나",
+        "description": "Alice의 성격과 행동을 정의하는 시스템 프롬프트입니다. 변경 사항은 서버 재시작 후 적용됩니다."
+      },
+      "compaction": {
+        "title": "컨텍스트 압축",
+        "description": "컨텍스트 창 관리. 대화 크기가 '최대 컨텍스트 - 최대 출력 토큰'에 가까워지면 오래된 메시지가 자동으로 요약됩니다."
+      }
+    },
     "language": "언어",
-    "languageDescription": "표시 언어를 선택하세요"
+    "languageDescription": "표시 언어를 선택하세요",
+    "evolutionMode": "진화 모드",
+    "evolutionModeOn": "전체 프로젝트 접근 — AI가 소스 코드를 수정할 수 있습니다",
+    "evolutionModeOff": "샌드박스 모드 — AI는 data/brain/ 폴더만 편집 가능합니다",
+    "maxContextTokens": "최대 컨텍스트 토큰",
+    "maxOutputTokens": "최대 출력 토큰",
+    "tools": {
+      "empty": "등록된 도구가 없습니다.",
+      "emptyHint": "엔진이 시작되면 도구가 여기에 표시됩니다.",
+      "summary": "{{count}}개 도구, {{groups}}개 그룹 — 변경 사항은 다음 AI 요청부터 적용"
+    },
+    "toolGroups": {
+      "thinking": "추론 도구",
+      "brain": "기억·감정",
+      "browser": "브라우저",
+      "cron": "크론 스케줄러",
+      "equity": "주식 데이터",
+      "crypto-data": "암호화폐 데이터",
+      "currency-data": "통화 데이터",
+      "news": "뉴스",
+      "news-archive": "뉴스 아카이브",
+      "analysis": "분석 도구",
+      "market-search": "시장 검색",
+      "crypto-trading": "암호화폐 거래",
+      "securities-trading": "증권 거래",
+      "trading": "거래",
+      "economy": "경제 데이터",
+      "notify": "알림"
+    }
+  },
+  "trading": {
+    "title": "거래",
+    "description": "통합 거래 계좌(UTA)를 설정하세요.",
+    "accounts": "거래 계좌",
+    "addUta": "+ 계좌 추가",
+    "noUtasTitle": "등록된 계좌 없음",
+    "noUtasHint": "암호화폐 거래소 또는 증권사를 연결하여 자동 거래를 시작하세요.",
+    "portfolio": "총 포트폴리오 · USD",
+    "cash": "현금",
+    "unrealized": "미실현 손익",
+    "paper": "모의투자",
+    "live": "실전투자",
+    "disabled": "비활성",
+    "reconnecting": "재연결 중…",
+    "positions": "보유 포지션",
+    "noPositions": "열린 포지션 없음 — 연결 정상, 계좌가 비어있습니다.",
+    "liveDataUnavailable": "실시간 데이터 없음",
+    "table": {
+      "contract": "종목",
+      "side": "방향",
+      "qty": "수량",
+      "mktValue": "시가",
+      "netLiq": "순 청산 가치",
+      "unrealizedPnl": "미실현 손익",
+      "short": "공매도"
+    },
+    "wizard": {
+      "stepPlatform": "계좌 추가 · 플랫폼 선택",
+      "stepConfigure": "계좌 추가 · 설정",
+      "stepTest": "계좌 추가 · 연결 테스트",
+      "recommended": "추천",
+      "crypto": "암호화폐",
+      "testing": "테스트",
+      "namePlaceholder": "예: okx-main",
+      "nameLabel": "계좌명",
+      "nameHint": "이 계좌의 표시 이름입니다. 고유 ID는 아래 자격증명에서 자동으로 생성됩니다.",
+      "showSecrets": "비밀 표시",
+      "hideSecrets": "비밀 숨기기",
+      "pickPlatform": "계속하려면 플랫폼을 선택하세요",
+      "back": "← 뒤로",
+      "testConnection": "연결 테스트 →",
+      "saveUta": "계좌 저장",
+      "fixConfig": "설정을 수정하고 다시 시도하세요",
+      "alreadyConfigured": "이미 등록된 브로커",
+      "connectionFailed": "연결 실패",
+      "connectedAs": "접속 계정",
+      "openExisting": "기존 계좌 열기"
+    },
+    "status": {
+      "loading": "로딩 중…",
+      "loadError": "거래 설정을 불러오지 못했습니다.",
+      "retry": "다시 시도",
+      "testing": "연결 테스트 중…",
+      "saving": "저장 중…",
+      "saved": "저장됨",
+      "unsaved": "저장되지 않은 변경사항",
+      "saveFailed": "저장 실패"
+    }
+  },
+  "portfolio": {
+    "title": "포트폴리오",
+    "description": "전체 거래 계좌의 실시간 포트폴리오 현황입니다.",
+    "refresh": "새로고침",
+    "totalEquity": "총 자산 · USD",
+    "totalPortfolio": "총 포트폴리오 · USD",
+    "cash": "현금",
+    "unrealized": "미실현 손익",
+    "unrealizedShort": "미실현",
+    "realized": "실현 손익",
+    "today": "오늘",
+    "noAccounts": "연결된 거래 계좌가 없습니다.",
+    "noAccountsHint": "거래 페이지에서 계좌를 연결하세요.",
+    "noPositions": "보유 포지션 없음.",
+    "loadError": "포트폴리오 데이터를 불러올 수 없습니다.",
+    "positions": "포지션",
+    "recentTrades": "최근 거래",
+    "disabled": "비활성",
+    "reconnecting": "재연결 중…",
+    "snapshots": "스냅샷",
+    "fxRates": "환율",
+    "fxNote": "1단위 → USD",
+    "saveFailed": "저장 실패",
+    "table": {
+      "symbol": "종목",
+      "ccy": "통화",
+      "qty": "수량",
+      "avgCost": "평균 단가",
+      "current": "현재가",
+      "mktValue": "시가총액",
+      "usdValue": "USD 환산",
+      "pnl": "손익",
+      "pnlPct": "손익률",
+      "short": "공매도"
+    },
+    "intervals": {
+      "1m": "1분",
+      "5m": "5분",
+      "15m": "15분",
+      "30m": "30분",
+      "1h": "1시간",
+      "custom": "사용자 설정"
+    }
+  },
+  "automation": {
+    "title": "자동화",
+    "sections": {
+      "flow": {
+        "title": "이벤트 흐름",
+        "description": "이벤트가 Alice의 리스너 파이프라인을 통해 실시간으로 처리되는 과정을 시각화합니다."
+      },
+      "heartbeat": {
+        "title": "하트비트",
+        "description": "주기적인 자가 점검 및 자율 사고. Alice는 스케줄에 따라 깨어나 상태를 점검합니다.",
+        "triggerNow": "지금 실행"
+      },
+      "cronJobs": {
+        "title": "크론 작업",
+        "description": "반복 작업을 스케줄합니다. 각 작업은 cron 표현식에 따라 이벤트를 발생시킵니다.",
+        "loading": "크론 작업 로딩 중…",
+        "empty": "등록된 크론 작업 없음",
+        "trigger": "실행",
+        "delete": "삭제"
+      },
+      "webhook": {
+        "title": "웹훅",
+        "description": "HTTP로 외부 이벤트를 수신합니다. 토큰을 사용하여 인증하세요."
+      }
+    },
+    "heartbeat": {
+      "triggered": "하트비트가 실행되었습니다!",
+      "toggleFailed": "하트비트 토글 실패",
+      "interval": "주기",
+      "activeHours": "활성 시간",
+      "start": "시작",
+      "end": "종료",
+      "timezone": "시간대",
+      "configTitle": "설정",
+      "configDescription": "하트비트 실행 주기와 활성 시간을 설정합니다.",
+      "promptFileTitle": "프롬프트 파일"
+    },
+    "cron": {
+      "addJob": "+ 작업 추가",
+      "newJob": "새 크론 작업",
+      "jobCount": "{{count}}개 작업",
+      "jobName": "작업 이름",
+      "payloadLabel": "페이로드 / 지시 내용",
+      "creating": "생성 중…",
+      "lastRun": "마지막 실행",
+      "never": "없음",
+      "nextRun": "다음",
+      "statusLabel": "상태",
+      "createdLabel": "생성일",
+      "payloadExpanded": "페이로드"
+    },
+    "status": {
+      "loading": "로딩 중…",
+      "saved": "저장됨",
+      "saving": "저장 중…"
+    }
+  },
+  "chat": {
+    "loadingHistory": "이전 메시지 불러오는 중…",
+    "historyStart": "— 대화 시작 —",
+    "emptyHint": "메시지를 입력하여 대화를 시작하세요"
+  },
+  "news": {
+    "title": "뉴스",
+    "allSources": "전체 소스",
+    "loading": "로딩 중…",
+    "empty": "기사 없음",
+    "emptyHint": "해당 기간에 뉴스 기사가 없습니다.",
+    "openOriginal": "원문 보기",
+    "articleCount": "{{count}}건",
+    "lookback": {
+      "1h": "1시간",
+      "12h": "12시간",
+      "24h": "24시간",
+      "7d": "7일"
+    }
   },
   "common": {
     "loading": "로딩 중…",
     "error": "오류",
     "save": "저장",
+    "saving": "저장 중…",
+    "saved": "저장됨",
     "cancel": "취소",
     "confirm": "확인",
     "delete": "삭제",
@@ -44,20 +304,18 @@
     "back": "뒤로",
     "next": "다음",
     "search": "검색",
-    "openAlice": "OpenAlice"
-  },
-  "trading": {
-    "title": "거래",
-    "accounts": "계좌",
-    "addAccount": "계좌 추가",
-    "noAccounts": "등록된 거래 계좌가 없습니다.",
-    "paper": "모의투자",
-    "live": "실전투자"
+    "retry": "다시 시도",
+    "unsavedChanges": "저장되지 않은 변경사항",
+    "openAlice": "OpenAlice",
+    "failedToLoad": "불러오기 실패",
+    "noData": "데이터 없음"
   },
   "errors": {
     "networkError": "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
     "apiKeyMissing": "API 키가 설정되지 않았습니다.",
-    "marketClosed": "현재 시장이 닫혀 있습니다.",
-    "unknown": "예기치 않은 오류가 발생했습니다."
+    "marketClosed": "현재 시장이 휴장 중입니다.",
+    "unknown": "예기치 않은 오류가 발생했습니다.",
+    "failedToLoad": "데이터를 불러오지 못했습니다.",
+    "failedToSave": "저장에 실패했습니다."
   }
 }

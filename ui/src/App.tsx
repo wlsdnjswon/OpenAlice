@@ -7,7 +7,7 @@ import { ChannelConfigModal } from './components/ChannelConfigModal'
 import { UpdateBanner } from './components/UpdateBanner'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ChannelsProvider, useChannels } from './contexts/ChannelsContext'
-import { findSectionForActivity } from './sections'
+import { useSidebarSection } from './sections'
 import { UrlAdopter } from './tabs/UrlAdopter'
 import { useWorkspace } from './tabs/store'
 
@@ -49,7 +49,7 @@ export function App() {
 function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const selectedSidebar = useWorkspace((state) => state.selectedSidebar)
-  const section = findSectionForActivity(selectedSidebar)
+  const section = useSidebarSection(selectedSidebar)
   const isDesktop = useIsDesktop()
   const showSidebarPanel = isDesktop && section != null
 
