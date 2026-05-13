@@ -344,6 +344,23 @@ export class UnifiedTradingAccount {
     return { utaId: aliceId.slice(0, sep), nativeKey: aliceId.slice(sep + 1) }
   }
 
+  /**
+   * Resolve a contract that may only have `aliceId` set (as the tool layer
+   * constructs for getQuote / getContractDetails) into a full Contract with
+   * broker-native fields populated.  If the contract already has `localSymbol`
+   * or `symbol` set, it is returned as-is.
+   */
+  private _resolveContract(contract: Contract): Contract {
+    if (contract.localSymbol || contract.symbol) return contract
+    const aliceId = contract.aliceId
+    if (!aliceId) return contract
+    const parsed = UnifiedTradingAccount.parseAliceId(aliceId)
+    if (!parsed) return contract
+    const resolved = this.broker.resolveNativeKey(parsed.nativeKey)
+    resolved.aliceId = aliceId
+    return resolved
+  }
+
   // ==================== Stage operations ====================
 
   stagePlaceOrder(params: StagePlaceOrderParams): AddResult {
@@ -605,7 +622,8 @@ export class UnifiedTradingAccount {
   }
 
   async getQuote(contract: Contract): Promise<Quote> {
-    const quote = await this._callBroker(() => this.broker.getQuote(contract))
+    const resolved = this._resolveContract(contract)
+    const quote = await this._callBroker(() => this.broker.getQuote(resolved))
     this.stampAliceId(quote.contract)
     return quote
   }
@@ -633,7 +651,8 @@ export class UnifiedTradingAccount {
   }
 
   async getContractDetails(query: Contract): Promise<ContractDetails | null> {
-    const details = await this._callBroker(() => this.broker.getContractDetails(query))
+    const resolved = this._resolveContract(query)
+    const details = await this._callBroker(() => this.broker.getContractDetails(resolved))
     if (details) this.stampAliceId(details.contract)
     return details
   }
