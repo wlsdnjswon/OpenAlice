@@ -317,5 +317,67 @@
     "unknown": "An unexpected error occurred.",
     "failedToLoad": "Failed to load data.",
     "failedToSave": "Failed to save."
+  },
+  "marketDataPage": {
+    "title": "Market Data",
+    "description": "Structured financial data — prices, fundamentals, macro indicators.",
+    "loading": "Loading...",
+    "loadFailed": "Failed to load configuration.",
+    "assetProviders": {
+      "title": "Asset Providers",
+      "description": "Select a data provider for each asset class. API keys are managed separately below.",
+      "free": "Free"
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Manage credentials for data providers. Keys are used across all asset classes that route to the provider.",
+      "placeholder": "Not configured",
+      "test": "Test",
+      "testing": "...",
+      "ok": "OK",
+      "fail": "Fail",
+      "keyHint": "Get a free API key at"
+    },
+    "tier": {
+      "free": "Free",
+      "freemium": "Free tier",
+      "paid": "Paid"
+    },
+    "providers": {
+      "fmp": {
+        "desc": "Stocks, crypto, forex, ETFs, indices — real-time quotes, financial statements (income / balance / cash flow), historical prices. Free tier includes all core data.",
+        "hint": "Free tier available — financialmodelingprep.com"
+      },
+      "fred": {
+        "desc": "Federal Reserve Economic Data — CPI, GDP, interest rates, macro indicators.",
+        "hint": "Free — fred.stlouisfed.org → My Account → API Keys"
+      },
+      "bls": {
+        "desc": "Bureau of Labor Statistics — employment, payrolls, wages, CPI.",
+        "hint": "Free — data.bls.gov/registrationEngine/"
+      },
+      "eia": {
+        "desc": "Energy Information Administration — petroleum status, energy reports.",
+        "hint": "Free — eia.gov/opendata/register.php"
+      },
+      "econdb": {
+        "desc": "Global macro indicators, country profiles, shipping data.",
+        "hint": "Free signup required — econdb.com"
+      },
+      "intrinio": {
+        "desc": "Equities, ETFs, fundamentals, news, options snapshots.",
+        "hint": "Paid — intrinio.com"
+      }
+    },
+    "advanced": {
+      "title": "Advanced",
+      "description": "Data backend selection.",
+      "backendLabel": "Data Backend",
+      "builtIn": "Built-in Engine (TypeBB)",
+      "external": "External OpenBB API",
+      "builtInDesc": "Uses the built-in TypeBB engine. No external process required.",
+      "externalDesc": "Connects to an external OpenBB-compatible HTTP endpoint.",
+      "apiUrl": "API URL"
+    }
   }
 }

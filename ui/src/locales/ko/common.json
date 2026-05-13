@@ -317,5 +317,67 @@
     "unknown": "예기치 않은 오류가 발생했습니다.",
     "failedToLoad": "데이터를 불러오지 못했습니다.",
     "failedToSave": "저장에 실패했습니다."
+  },
+  "marketDataPage": {
+    "title": "시장 데이터",
+    "description": "가격, 재무제표, 거시 지표 등 구조화된 금융 데이터.",
+    "loading": "불러오는 중...",
+    "loadFailed": "설정을 불러오지 못했습니다.",
+    "assetProviders": {
+      "title": "자산 공급자",
+      "description": "자산 유형별 데이터 공급자를 선택하세요. API 키는 아래에서 별도로 관리합니다.",
+      "free": "무료"
+    },
+    "apiKeys": {
+      "title": "API 키",
+      "description": "데이터 공급자의 인증 키를 관리합니다. 키는 해당 공급자로 라우팅된 모든 자산 유형에 적용됩니다.",
+      "placeholder": "미설정",
+      "test": "테스트",
+      "testing": "...",
+      "ok": "정상",
+      "fail": "실패",
+      "keyHint": "무료 API 키 발급"
+    },
+    "tier": {
+      "free": "무료",
+      "freemium": "무료 플랜",
+      "paid": "유료"
+    },
+    "providers": {
+      "fmp": {
+        "desc": "주식·암호화폐·외환·ETF·지수 — 실시간 시세, 재무제표(손익·재무상태표·현금흐름), 히스토리컬 가격. 핵심 데이터는 무료 플랜에서 모두 제공됩니다.",
+        "hint": "무료 플랜 제공 — financialmodelingprep.com"
+      },
+      "fred": {
+        "desc": "연방준비제도 경제 데이터 — CPI, GDP, 금리, 거시 지표.",
+        "hint": "무료 — fred.stlouisfed.org → My Account → API Keys"
+      },
+      "bls": {
+        "desc": "미국 노동통계국 — 고용, 급여, 임금, CPI.",
+        "hint": "무료 — data.bls.gov/registrationEngine/"
+      },
+      "eia": {
+        "desc": "미국 에너지정보청 — 석유 현황, 에너지 보고서.",
+        "hint": "무료 — eia.gov/opendata/register.php"
+      },
+      "econdb": {
+        "desc": "글로벌 거시 지표, 국가 프로필, 물류 데이터.",
+        "hint": "무료 가입 필요 — econdb.com"
+      },
+      "intrinio": {
+        "desc": "주식·ETF·펀더멘털·뉴스·옵션 스냅샷.",
+        "hint": "유료 — intrinio.com"
+      }
+    },
+    "advanced": {
+      "title": "고급 설정",
+      "description": "데이터 백엔드 선택.",
+      "backendLabel": "데이터 백엔드",
+      "builtIn": "내장 엔진 (TypeBB)",
+      "external": "외부 OpenBB API",
+      "builtInDesc": "내장 TypeBB 엔진을 사용합니다. 외부 프로세스가 필요 없습니다.",
+      "externalDesc": "외부 OpenBB 호환 HTTP 엔드포인트에 연결합니다.",
+      "apiUrl": "API URL"
+    }
   }
 }

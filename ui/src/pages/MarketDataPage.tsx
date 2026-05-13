@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, type AppConfig } from '../api'
 import { SaveIndicator } from '../components/SaveIndicator'
 import { ConfigSection, Field, inputClass } from '../components/form'
@@ -11,27 +12,46 @@ type MarketDataConfig = Record<string, unknown>
 // ==================== Constants ====================
 
 const PROVIDER_OPTIONS: Record<string, string[]> = {
-  equity: ['yfinance', 'fmp', 'intrinio'],
-  crypto: ['yfinance', 'fmp'],
-  currency: ['yfinance', 'fmp'],
+  equity:    ['yfinance', 'fmp', 'intrinio'],
+  crypto:    ['yfinance', 'fmp'],
+  currency:  ['yfinance', 'fmp'],
   commodity: ['yfinance', 'fmp'],
 }
 
-const ASSET_LABELS: Record<string, string> = {
-  equity: 'Equity',
-  crypto: 'Crypto',
-  currency: 'Currency',
-  commodity: 'Commodity',
+const ASSET_KEYS = ['equity', 'crypto', 'currency', 'commodity'] as const
+
+type Tier = 'free' | 'freemium' | 'paid'
+
+interface ProviderEntry {
+  key: string
+  name: string
+  tier: Tier
 }
 
-const ALL_PROVIDERS = [
-  { key: 'fmp', name: 'FMP', desc: 'Equity, crypto, currency, commodity, ETF, index — fundamentals, calendars, discovery.', hint: 'financialmodelingprep.com' },
-  { key: 'fred', name: 'FRED', desc: 'Federal Reserve Economic Data — CPI, GDP, interest rates, macro indicators.', hint: 'Free — fred.stlouisfed.org → My Account → API Keys' },
-  { key: 'bls', name: 'BLS', desc: 'Bureau of Labor Statistics — employment, payrolls, wages, CPI.', hint: 'Free — data.bls.gov/registrationEngine/' },
-  { key: 'eia', name: 'EIA', desc: 'Energy Information Administration — petroleum status, energy reports.', hint: 'Free — eia.gov/opendata/register.php' },
-  { key: 'econdb', name: 'EconDB', desc: 'Global macro indicators, country profiles, shipping data.', hint: 'Required (free signup) — econdb.com' },
-  { key: 'intrinio', name: 'Intrinio', desc: 'Equities, ETFs, fundamentals, news, options snapshots.', hint: 'intrinio.com' },
-] as const
+const ALL_PROVIDERS: ProviderEntry[] = [
+  { key: 'fmp',      name: 'FMP',     tier: 'freemium' },
+  { key: 'fred',     name: 'FRED',    tier: 'free'     },
+  { key: 'bls',      name: 'BLS',     tier: 'free'     },
+  { key: 'eia',      name: 'EIA',     tier: 'free'     },
+  { key: 'econdb',   name: 'EconDB',  tier: 'free'     },
+  { key: 'intrinio', name: 'Intrinio',tier: 'paid'     },
+]
+
+// ==================== Tier Badge ====================
+
+function TierBadge({ tier }: { tier: Tier }) {
+  const { t } = useTranslation()
+  const label = t(`marketDataPage.tier.${tier}`)
+  const cls =
+    tier === 'free'     ? 'bg-green/10 text-green border-green/20' :
+    tier === 'freemium' ? 'bg-accent/10 text-accent border-accent/20' :
+                          'bg-bg-tertiary text-text-muted border-border'
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${cls}`}>
+      {label}
+    </span>
+  )
+}
 
 // ==================== Test Button ====================
 
@@ -44,6 +64,13 @@ function TestButton({
   disabled: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation()
+  const labels = {
+    idle:    t('marketDataPage.apiKeys.test'),
+    testing: t('marketDataPage.apiKeys.testing'),
+    ok:      t('marketDataPage.apiKeys.ok'),
+    error:   t('marketDataPage.apiKeys.fail'),
+  }
   return (
     <button
       onClick={onClick}
@@ -56,7 +83,7 @@ function TestButton({
             : 'border-border text-text-muted hover:bg-bg-tertiary hover:text-text'
       }`}
     >
-      {status === 'testing' ? '...' : status === 'ok' ? 'OK' : status === 'error' ? 'Fail' : 'Test'}
+      {labels[status]}
     </button>
   )
 }
@@ -64,6 +91,7 @@ function TestButton({
 // ==================== Page ====================
 
 export function MarketDataPage() {
+  const { t } = useTranslation()
   const { config, status, loadError, updateConfig, updateConfigImmediate, retry } = useConfigPage<MarketDataConfig>({
     section: 'marketData',
     extract: (full: AppConfig) => (full as Record<string, unknown>).marketData as MarketDataConfig,
@@ -74,9 +102,9 @@ export function MarketDataPage() {
   if (!config) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
-        <PageHeader title="Market Data" description="Structured financial data — prices, fundamentals, macro indicators." />
+        <PageHeader title={t('marketDataPage.title')} description={t('marketDataPage.description')} />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-[13px] text-text-muted">Loading...</p>
+          <p className="text-[13px] text-text-muted">{t('marketDataPage.loading')}</p>
         </div>
       </div>
     )
@@ -104,8 +132,8 @@ export function MarketDataPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <PageHeader
-        title="Market Data"
-        description="Structured financial data — prices, fundamentals, macro indicators."
+        title={t('marketDataPage.title')}
+        description={t('marketDataPage.description')}
         right={
           <div className="flex items-center gap-3">
             <SaveIndicator status={status} onRetry={retry} />
@@ -116,19 +144,14 @@ export function MarketDataPage() {
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-5">
         <div className={`max-w-[880px] mx-auto ${!enabled ? 'opacity-40 pointer-events-none' : ''}`}>
-          {/* Asset Providers — route selection only, no keys */}
           <AssetProvidersSection
             providers={providers}
             onProviderChange={handleProviderChange}
           />
-
-          {/* API Keys — unified credential management */}
           <ApiKeysSection
             providerKeys={providerKeys}
             onKeyChange={handleKeyChange}
           />
-
-          {/* Advanced — backend switch */}
           <AdvancedSection
             backend={dataBackend}
             apiUrl={apiUrl}
@@ -136,7 +159,11 @@ export function MarketDataPage() {
             onApiUrlChange={(url) => updateConfig({ apiUrl: url })}
           />
         </div>
-        {loadError && <p className="text-[13px] text-red mt-4 max-w-[880px] mx-auto">Failed to load configuration.</p>}
+        {loadError && (
+          <p className="text-[13px] text-red mt-4 max-w-[880px] mx-auto">
+            {t('marketDataPage.loadFailed')}
+          </p>
+        )}
       </div>
     </div>
   )
@@ -151,17 +178,19 @@ function AssetProvidersSection({
   providers: Record<string, string>
   onProviderChange: (asset: string, provider: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <ConfigSection
-      title="Asset Providers"
-      description="Select a data provider for each asset class. API keys are managed separately below."
+      title={t('marketDataPage.assetProviders.title')}
+      description={t('marketDataPage.assetProviders.description')}
     >
       <div className="space-y-3">
-        {Object.entries(PROVIDER_OPTIONS).map(([asset, options]) => {
+        {ASSET_KEYS.map((asset) => {
+          const options = PROVIDER_OPTIONS[asset]
           const selectedProvider = providers[asset] || options[0]
           return (
             <div key={asset} className="flex items-center gap-3">
-              <span className="text-[13px] text-text w-24 shrink-0 font-medium">{ASSET_LABELS[asset]}</span>
+              <span className="text-[13px] text-text w-24 shrink-0 font-medium capitalize">{asset}</span>
               <select
                 className={`${inputClass} max-w-[180px]`}
                 value={selectedProvider}
@@ -170,7 +199,9 @@ function AssetProvidersSection({
                 {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
               </select>
               {selectedProvider === 'yfinance' && (
-                <span className="text-[13px] text-text-muted/50 px-1">Free</span>
+                <span className="text-[13px] text-text-muted/50 px-1">
+                  {t('marketDataPage.assetProviders.free')}
+                </span>
               )}
             </div>
           )
@@ -189,16 +220,19 @@ function ApiKeysSection({
   providerKeys: Record<string, string>
   onKeyChange: (keyName: string, value: string) => void
 }) {
+  const { t } = useTranslation()
   const [localKeys, setLocalKeys] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
     for (const p of ALL_PROVIDERS) init[p.key] = providerKeys[p.key] || ''
     return init
   })
   const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'testing' | 'ok' | 'error'>>({})
+  const [testErrors, setTestErrors] = useState<Record<string, string>>({})
 
   const handleKeyChange = (keyName: string, value: string) => {
     setLocalKeys((prev) => ({ ...prev, [keyName]: value }))
     setTestStatus((prev) => ({ ...prev, [keyName]: 'idle' }))
+    setTestErrors((prev) => ({ ...prev, [keyName]: '' }))
     onKeyChange(keyName, value)
   }
 
@@ -206,32 +240,45 @@ function ApiKeysSection({
     const key = localKeys[keyName]
     if (!key) return
     setTestStatus((prev) => ({ ...prev, [keyName]: 'testing' }))
+    setTestErrors((prev) => ({ ...prev, [keyName]: '' }))
     try {
       const result = await api.marketData.testProvider(keyName, key)
       setTestStatus((prev) => ({ ...prev, [keyName]: result.ok ? 'ok' : 'error' }))
-    } catch {
+      if (!result.ok && result.error) {
+        setTestErrors((prev) => ({ ...prev, [keyName]: result.error! }))
+      }
+    } catch (err) {
       setTestStatus((prev) => ({ ...prev, [keyName]: 'error' }))
+      setTestErrors((prev) => ({ ...prev, [keyName]: err instanceof Error ? err.message : String(err) }))
     }
   }
 
   return (
     <ConfigSection
-      title="API Keys"
-      description="Manage credentials for data providers. Keys are used across all asset classes that route to the provider."
+      title={t('marketDataPage.apiKeys.title')}
+      description={t('marketDataPage.apiKeys.description')}
     >
-      <div className="space-y-4">
-        {ALL_PROVIDERS.map(({ key, name, desc, hint }) => {
+      <div className="space-y-5">
+        {ALL_PROVIDERS.map(({ key, name, tier }) => {
           const status = testStatus[key] || 'idle'
+          const errMsg = testErrors[key] || ''
+          const desc = t(`marketDataPage.providers.${key}.desc`)
+          const hint = t(`marketDataPage.providers.${key}.hint`)
           return (
-            <Field key={key} label={name} description={hint}>
-              <p className="text-[12px] text-text-muted/70 mb-2">{desc}</p>
+            <div key={key}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[13px] font-medium text-text">{name}</span>
+                <TierBadge tier={tier} />
+              </div>
+              <p className="text-[12px] text-text-muted/70 mb-1">{desc}</p>
+              <p className="text-[11px] text-text-muted/50 mb-2">{hint}</p>
               <div className="flex items-center gap-2">
                 <input
                   className={inputClass}
                   type="password"
                   value={localKeys[key]}
                   onChange={(e) => handleKeyChange(key, e.target.value)}
-                  placeholder="Not configured"
+                  placeholder={t('marketDataPage.apiKeys.placeholder')}
                 />
                 <TestButton
                   status={status}
@@ -239,7 +286,10 @@ function ApiKeysSection({
                   onClick={() => testProvider(key)}
                 />
               </div>
-            </Field>
+              {status === 'error' && errMsg && (
+                <p className="mt-1.5 text-[11px] text-red/80 leading-snug">{errMsg}</p>
+              )}
+            </div>
           )
         })}
       </div>
@@ -260,6 +310,7 @@ function AdvancedSection({
   onBackendChange: (backend: string) => void
   onApiUrlChange: (url: string) => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -268,17 +319,16 @@ function AdvancedSection({
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 cursor-pointer text-left mb-1"
       >
-        <h3 className="text-[14px] font-semibold text-text">Advanced</h3>
-        <span className="text-[11px] text-text-muted/50">{expanded ? '\u25BC' : '\u25B6'}</span>
+        <h3 className="text-[14px] font-semibold text-text">{t('marketDataPage.advanced.title')}</h3>
+        <span className="text-[11px] text-text-muted/50">{expanded ? '▾' : '▸'}</span>
       </button>
       {!expanded && (
-        <p className="text-[13px] text-text-muted/70">Data backend selection.</p>
+        <p className="text-[13px] text-text-muted/70">{t('marketDataPage.advanced.description')}</p>
       )}
       {expanded && (
         <div className="space-y-6 mt-4">
-          {/* Data Backend */}
           <div>
-            <p className="text-[13px] font-medium text-text mb-2">Data Backend</p>
+            <p className="text-[13px] font-medium text-text mb-2">{t('marketDataPage.advanced.backendLabel')}</p>
             <div className="flex border border-border rounded-lg overflow-hidden w-fit mb-2">
               {(['typebb-sdk', 'openbb-api'] as const).map((opt, i) => (
                 <button
@@ -292,18 +342,20 @@ function AdvancedSection({
                       : 'text-text-muted hover:text-text'
                   }`}
                 >
-                  {opt === 'typebb-sdk' ? 'Built-in Engine (TypeBB)' : 'External OpenBB API'}
+                  {opt === 'typebb-sdk'
+                    ? t('marketDataPage.advanced.builtIn')
+                    : t('marketDataPage.advanced.external')}
                 </button>
               ))}
             </div>
             <p className="text-[12px] text-text-muted/70">
               {backend === 'typebb-sdk'
-                ? 'Uses the built-in TypeBB engine. No external process required.'
-                : 'Connects to an external OpenBB-compatible HTTP endpoint.'}
+                ? t('marketDataPage.advanced.builtInDesc')
+                : t('marketDataPage.advanced.externalDesc')}
             </p>
             {backend === 'openbb-api' && (
               <div className="mt-3">
-                <Field label="API URL">
+                <Field label={t('marketDataPage.advanced.apiUrl')}>
                   <input
                     className={inputClass}
                     value={apiUrl}
