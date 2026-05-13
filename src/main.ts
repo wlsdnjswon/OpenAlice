@@ -16,6 +16,7 @@ import { createBrainTools } from './tool/brain.js'
 import type { BrainExportState } from './domain/brain/index.js'
 import { createBrowserTools } from './tool/browser.js'
 import { SymbolIndex } from './domain/market-data/equity/index.js'
+import { KrxCatalog } from './domain/market-data/equity/index.js'
 import { CommodityCatalog } from './domain/market-data/commodity/index.js'
 import { createEquityTools } from './tool/equity.js'
 import { getSDKExecutor, buildRouteMap, SDKEquityClient, SDKCryptoClient, SDKCurrencyClient, SDKEtfClient, SDKIndexClient, SDKDerivativesClient, SDKCommodityClient, SDKEconomyClient } from './domain/market-data/client/typebb/index.js'
@@ -221,10 +222,13 @@ async function main() {
   const symbolIndex = new SymbolIndex()
   await symbolIndex.load(equityClient)
 
+  const krxCatalog = new KrxCatalog()
+  krxCatalog.load()
+
   const commodityCatalog = new CommodityCatalog()
   commodityCatalog.load()
 
-  const marketSearch = { symbolIndex, cryptoClient, currencyClient, commodityCatalog }
+  const marketSearch = { symbolIndex, krxCatalog, cryptoClient, currencyClient, commodityCatalog }
 
   // ==================== Tool Registration ====================
 

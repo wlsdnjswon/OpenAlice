@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { marketApi, type SearchResult, type AssetClass } from '../../api/market'
 
 const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
@@ -18,6 +19,7 @@ function resultSymbol(r: SearchResult): string {
 }
 
 export function SearchBox() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [query, setQuery] = useState('')
@@ -94,7 +96,7 @@ export function SearchBox() {
     <div ref={containerRef} className="relative">
       <input
         className="w-full px-3 py-2 text-[14px] bg-bg-secondary border border-border rounded-md focus:outline-none focus:border-accent placeholder:text-text-muted/50"
-        placeholder="Search assets — AAPL, bitcoin, EUR, gold…"
+        placeholder={t('market.searchPlaceholder')}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
@@ -103,10 +105,10 @@ export function SearchBox() {
       {open && query.trim() && (
         <div className="absolute z-20 mt-1 w-full bg-bg-secondary border border-border rounded-md shadow-lg max-h-[360px] overflow-y-auto">
           {loading && results.length === 0 && (
-            <div className="px-3 py-2 text-[13px] text-text-muted">Searching…</div>
+            <div className="px-3 py-2 text-[13px] text-text-muted">{t('market.searching')}</div>
           )}
           {!loading && results.length === 0 && (
-            <div className="px-3 py-2 text-[13px] text-text-muted">No matches</div>
+            <div className="px-3 py-2 text-[13px] text-text-muted">{t('market.noMatches')}</div>
           )}
           {results.map((r, i) => (
             <button
@@ -122,7 +124,7 @@ export function SearchBox() {
                 <span className="text-text-muted truncate flex-1">— {r.name}</span>
               )}
               <span className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded font-medium ${ASSET_CLASS_COLORS[r.assetClass]}`}>
-                {r.assetClass}
+                {t(`market.assetClass.${r.assetClass}`)}
               </span>
             </button>
           ))}

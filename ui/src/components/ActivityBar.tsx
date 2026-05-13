@@ -1,6 +1,8 @@
 import { type LucideIcon, MessageSquare, LineChart, GitBranch, BarChart3, Newspaper, Zap, Settings, Code2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { type Page } from '../App'
 import { useWorkspace } from '../tabs/store'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import type { ActivitySection, ViewSpec } from '../tabs/types'
 
 /**
@@ -52,38 +54,39 @@ interface NavSection {
   items: NavLeaf[]
 }
 
-const NAV_SECTIONS: NavSection[] = [
-  {
-    sectionLabel: '',
-    items: [
-      { page: 'chat',           label: 'Chat',           icon: MessageSquare },
-      { page: 'portfolio',      label: 'Portfolio',      icon: LineChart, defaultTab: { kind: 'portfolio', params: {} } },
-      { page: 'trading-as-git', label: 'Trading as Git', icon: GitBranch },
-      { page: 'market',         label: 'Market',         icon: BarChart3 },
-      { page: 'news',           label: 'News',           icon: Newspaper, defaultTab: { kind: 'news', params: {} } },
-    ],
-  },
-  {
-    sectionLabel: 'Agent',
-    items: [
-      { page: 'automation', label: 'Automation', icon: Zap, defaultTab: { kind: 'automation', params: { section: 'flow' } } },
-    ],
-  },
-  {
-    sectionLabel: 'System',
-    items: [
-      { page: 'settings', label: 'Settings', icon: Settings },
-      { page: 'dev',      label: 'Dev',      icon: Code2 },
-    ],
-  },
-]
-
 // ==================== ActivityBar ====================
 
 export function ActivityBar({ open, onClose }: ActivityBarProps) {
+  const { t } = useTranslation()
   const selectedSidebar = useWorkspace((state) => state.selectedSidebar)
   const setSidebar = useWorkspace((state) => state.setSidebar)
   const openOrFocus = useWorkspace((state) => state.openOrFocus)
+
+  const NAV_SECTIONS: NavSection[] = [
+    {
+      sectionLabel: '',
+      items: [
+        { page: 'chat',           label: t('nav.chat'),           icon: MessageSquare },
+        { page: 'portfolio',      label: t('nav.portfolio'),      icon: LineChart, defaultTab: { kind: 'portfolio', params: {} } },
+        { page: 'trading-as-git', label: t('nav.tradingAsGit'),   icon: GitBranch },
+        { page: 'market',         label: t('nav.market'),         icon: BarChart3 },
+        { page: 'news',           label: t('nav.news'),           icon: Newspaper, defaultTab: { kind: 'news', params: {} } },
+      ],
+    },
+    {
+      sectionLabel: t('nav.agent'),
+      items: [
+        { page: 'automation', label: t('nav.automation'), icon: Zap, defaultTab: { kind: 'automation', params: { section: 'flow' } } },
+      ],
+    },
+    {
+      sectionLabel: t('nav.system'),
+      items: [
+        { page: 'settings', label: t('nav.settings'), icon: Settings },
+        { page: 'dev',      label: t('nav.dev'),      icon: Code2 },
+      ],
+    },
+  ]
 
   return (
     <>
@@ -177,6 +180,11 @@ export function ActivityBar({ open, onClose }: ActivityBarProps) {
             </div>
           ))}
         </nav>
+
+        {/* Language switcher — bottom of sidebar */}
+        <div className="px-2 md:px-1.5 py-3 flex justify-start md:justify-center border-t border-border/50">
+          <LanguageSwitcher />
+        </div>
 
       </aside>
     </>

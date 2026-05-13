@@ -1,3 +1,5 @@
 export { SymbolIndex } from './symbol-index.js'
 export type { SymbolEntry } from './symbol-index.js'
+export { KrxCatalog, normalizeKrxTicker } from './krx-catalog.js'
+export type { KrxSymbolEntry } from './krx-catalog.js'
 export type * from './types'

@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "chat": "Chat",
+    "portfolio": "Portfolio",
+    "tradingAsGit": "Trading as Git",
+    "market": "Market",
+    "news": "News",
+    "automation": "Automation",
+    "settings": "Settings",
+    "dev": "Dev",
+    "agent": "Agent",
+    "system": "System"
+  },
+  "market": {
+    "title": "Market",
+    "description": "Search assets and view price history.",
+    "searchPlaceholder": "Search assets — AAPL, bitcoin, EUR, gold…",
+    "pickAsset": "Pick an asset to begin.",
+    "pickAssetHint": "Search by ticker or name. Equities show profile, quote, candles, key metrics, and financial statements. Other asset classes show price history only for now.",
+    "searching": "Searching…",
+    "noMatches": "No matches",
+    "assetClass": {
+      "equity": "equity",
+      "crypto": "crypto",
+      "currency": "currency",
+      "commodity": "commodity"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Choose your preferred display language"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "openAlice": "OpenAlice"
+  },
+  "trading": {
+    "title": "Trading",
+    "accounts": "Accounts",
+    "addAccount": "Add Account",
+    "noAccounts": "No trading accounts configured.",
+    "paper": "Paper",
+    "live": "Live"
+  },
+  "errors": {
+    "networkError": "Network error. Please try again.",
+    "apiKeyMissing": "API key not configured.",
+    "marketClosed": "Market is currently closed.",
+    "unknown": "An unexpected error occurred."
+  }
+}

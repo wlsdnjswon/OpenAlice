@@ -5,6 +5,7 @@ import { Sidebar } from './components/Sidebar'
 import { TabHost } from './components/TabHost'
 import { ChannelConfigModal } from './components/ChannelConfigModal'
 import { UpdateBanner } from './components/UpdateBanner'
+import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ChannelsProvider, useChannels } from './contexts/ChannelsContext'
 import { findSectionForActivity } from './sections'
 import { UrlAdopter } from './tabs/UrlAdopter'
@@ -81,7 +82,8 @@ function AppShell() {
             <path d="M3 5h14M3 10h14M3 15h14" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-text">OpenAlice</span>
+        <span className="text-sm font-semibold text-text flex-1">OpenAlice</span>
+        <LanguageSwitcher />
       </div>
 
       <TabHost />

@@ -20,9 +20,12 @@ export function createMarketSearchTools(deps: MarketSearchDeps) {
       description: `Search for symbols across all asset classes (equities, crypto, currencies, commodities) for market data research.
 
 Returns matching symbols with assetClass attribution ("equity", "crypto", "currency", or "commodity").
-Equity results come from SEC/TMX listings (~13k US/CA stocks); crypto and currency results
-come from Yahoo Finance fuzzy search; commodity results come from a canonical catalog (~25 items).
+Equity results come from: SEC/TMX listings (~13k US/CA stocks) and KRX catalog (~80 major Korean stocks).
+Crypto and currency results come from Yahoo Finance fuzzy search; commodity results come from a canonical catalog (~25 items).
 Currency results are filtered to XXXUSD pairs only.
+
+Korean stocks use yfinance suffixes: 005930.KS (Samsung, KOSPI) or 035720.KQ (Kakao, KOSDAQ).
+You can search by Korean company name (e.g. "삼성전자"), English name (e.g. "Samsung"), or ticker code.
 
 For commodities, use the canonical id (e.g. "gold", "crude_oil", "copper") with calculateIndicator
 and other tools — provider-specific tickers (GC=F, GCUSD) are resolved automatically.

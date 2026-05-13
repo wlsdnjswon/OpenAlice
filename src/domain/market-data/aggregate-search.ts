@@ -6,11 +6,13 @@
  * HTTP route (/api/market/search) — both surfaces must return the same thing.
  *
  * equity    — SymbolIndex (SEC/TMX local cache, regex, zero-latency)
+ *           + KrxCatalog (KRX/KOSDAQ static catalog, zero-latency)
  * commodity — CommodityCatalog (canonical catalog, ~25 items)
  * crypto    — cryptoClient.search on yfinance (online fuzzy)
  * currency  — currencyClient.search on yfinance (online fuzzy, XXXUSD filter)
  */
 import type { SymbolIndex } from './equity/symbol-index.js'
+import type { KrxCatalog } from './equity/krx-catalog.js'
 import type { CommodityCatalog } from './commodity/commodity-catalog.js'
 import type { CryptoClientLike, CurrencyClientLike } from './client/types.js'
 
@@ -18,6 +20,7 @@ export type AssetClass = 'equity' | 'crypto' | 'currency' | 'commodity'
 
 export interface MarketSearchDeps {
   symbolIndex: SymbolIndex
+  krxCatalog: KrxCatalog
   cryptoClient: CryptoClientLike
   currencyClient: CurrencyClientLike
   commodityCatalog: CommodityCatalog
@@ -73,6 +76,16 @@ export async function aggregateSymbolSearch(
     .search(q, limit)
     .map((r) => ({ ...r, assetClass: 'equity' as const }))
 
+  const krxResults = deps.krxCatalog
+    .search(q, limit)
+    .map((r) => ({
+      symbol: r.symbol,
+      name: r.nameEn ? `${r.name} (${r.nameEn})` : r.name,
+      exchange: r.exchange,
+      sector: r.sector,
+      assetClass: 'equity' as const,
+    }))
+
   const commodityResults = deps.commodityCatalog
     .search(q, limit)
     .map((r) => ({ ...r, assetClass: 'commodity' as const }))
@@ -95,6 +108,7 @@ export async function aggregateSymbolSearch(
 
   const all: MarketSearchResult[] = [
     ...equityResults,
+    ...krxResults,
     ...cryptoResults,
     ...currencyResults,
     ...commodityResults,
