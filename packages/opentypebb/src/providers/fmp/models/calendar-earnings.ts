@@ -6,8 +6,8 @@
 import { z } from 'zod'
 import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { CalendarEarningsQueryParamsSchema, CalendarEarningsDataSchema } from '../../../standard-models/calendar-earnings.js'
-import { applyAliases, amakeRequest } from '../../../core/provider/utils/helpers.js'
-import { responseCallback } from '../utils/helpers.js'
+import { applyAliases } from '../../../core/provider/utils/helpers.js'
+import { makeRequest } from '../utils/helpers.js'
 
 // --- Query Params ---
 
@@ -80,7 +80,7 @@ export class FMPCalendarEarningsFetcher extends Fetcher {
 
     const allData: Record<string, unknown>[] = []
     const results = await Promise.all(
-      urls.map((url) => amakeRequest<Record<string, unknown>[]>(url, { responseCallback }).catch(() => [])),
+      urls.map((url) => makeRequest<Record<string, unknown>[]>(url).catch(() => [])),
     )
 
     for (const batch of results) {

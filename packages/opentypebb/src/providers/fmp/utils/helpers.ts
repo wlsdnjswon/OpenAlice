@@ -19,8 +19,10 @@ export async function responseCallback(response: Response): Promise<Response> {
   const data = await response.json()
 
   if (data && typeof data === 'object' && !Array.isArray(data)) {
+    // FMP uses several error field names across old and new API versions
     const errorMessage = (data as Record<string, unknown>)['Error Message'] ??
-      (data as Record<string, unknown>)['error']
+      (data as Record<string, unknown>)['error'] ??
+      (data as Record<string, unknown>)['message']
 
     if (errorMessage != null) {
       const msg = String(errorMessage).toLowerCase()
@@ -31,6 +33,7 @@ export async function responseCallback(response: Response): Promise<Response> {
         msg.includes('premium query parameter') ||
         msg.includes('subscription') ||
         msg.includes('unauthorized') ||
+        msg.includes('invalid api') ||
         msg.includes('premium')
 
       if (isUnauthorized) {
@@ -52,11 +55,25 @@ export async function responseCallback(response: Response): Promise<Response> {
 }
 
 /**
+ * Make a request to FMP, automatically passing the apikey as both a query
+ * parameter (already in the URL) and as an `apikey` header (FMP stable API
+ * accepts either form; sending both maximises compatibility).
+ */
+export async function makeRequest<T = unknown>(url: string): Promise<T> {
+  const headers: Record<string, string> = {}
+  try {
+    const apiKey = new URL(url).searchParams.get('apikey')
+    if (apiKey) headers['apikey'] = apiKey
+  } catch { /* ignore malformed URLs */ }
+  return amakeRequest<T>(url, { headers, responseCallback })
+}
+
+/**
  * Get data from FMP endpoint.
  * Maps to: get_data() in helpers.py
  */
 export async function getData<T = unknown>(url: string): Promise<T> {
-  return amakeRequest<T>(url, { responseCallback })
+  return makeRequest<T>(url)
 }
 
 /**
@@ -64,10 +81,7 @@ export async function getData<T = unknown>(url: string): Promise<T> {
  * Maps to: get_data_urls() in helpers.py
  */
 export async function getDataUrls<T = unknown>(urls: string[]): Promise<T[]> {
-  const results = await Promise.all(
-    urls.map((url) => amakeRequest<T>(url, { responseCallback })),
-  )
-  return results
+  return Promise.all(urls.map((url) => makeRequest<T>(url)))
 }
 
 /**
@@ -251,7 +265,7 @@ export async function getHistoricalOhlc(
     const url = `${baseUrl}symbol=${symbol}&${queryStr}&apikey=${apiKey}`
 
     try {
-      const response = await amakeRequest<unknown>(url, { responseCallback })
+      const response = await makeRequest<unknown>(url)
 
       if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
         const dict = response as Record<string, unknown>

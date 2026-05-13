@@ -8,8 +8,7 @@ import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { EquityQuoteQueryParamsSchema, EquityQuoteDataSchema } from '../../../standard-models/equity-quote.js'
 import { applyAliases } from '../../../core/provider/utils/helpers.js'
 import { EmptyDataError } from '../../../core/provider/utils/errors.js'
-import { amakeRequest } from '../../../core/provider/utils/helpers.js'
-import { responseCallback } from '../utils/helpers.js'
+import { makeRequest } from '../utils/helpers.js'
 
 // --- Query Params ---
 
@@ -60,7 +59,7 @@ export class FMPEquityQuoteFetcher extends Fetcher {
     const getOne = async (symbol: string) => {
       const url = `${baseUrl}symbol=${symbol}&apikey=${apiKey}`
       try {
-        const result = await amakeRequest<Record<string, unknown>[]>(url, { responseCallback })
+        const result = await makeRequest<Record<string, unknown>[]>(url)
         if (result && result.length > 0) {
           results.push(...result)
         } else {

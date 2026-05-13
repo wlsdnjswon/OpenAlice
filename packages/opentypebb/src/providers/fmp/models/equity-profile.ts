@@ -8,8 +8,7 @@ import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { EquityInfoQueryParamsSchema, EquityInfoDataSchema } from '../../../standard-models/equity-info.js'
 import { applyAliases, replaceEmptyStrings } from '../../../core/provider/utils/helpers.js'
 import { EmptyDataError } from '../../../core/provider/utils/errors.js'
-import { amakeRequest } from '../../../core/provider/utils/helpers.js'
-import { responseCallback } from '../utils/helpers.js'
+import { makeRequest } from '../utils/helpers.js'
 
 // --- Query Params ---
 
@@ -75,7 +74,7 @@ export class FMPEquityProfileFetcher extends Fetcher {
     const getOne = async (symbol: string) => {
       const url = `${baseUrl}profile?symbol=${symbol}&apikey=${apiKey}`
       try {
-        const result = await amakeRequest<Record<string, unknown>[]>(url, { responseCallback })
+        const result = await makeRequest<Record<string, unknown>[]>(url)
         if (result && result.length > 0) {
           results.push(result[0])
         } else {

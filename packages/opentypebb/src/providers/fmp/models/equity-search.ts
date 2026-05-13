@@ -8,8 +8,7 @@ import { z } from 'zod'
 import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { EquitySearchQueryParamsSchema, EquitySearchDataSchema } from '../../../standard-models/equity-search.js'
 import { EmptyDataError } from '../../../core/provider/utils/errors.js'
-import { amakeRequest } from '../../../core/provider/utils/helpers.js'
-import { responseCallback } from '../utils/helpers.js'
+import { makeRequest } from '../utils/helpers.js'
 
 export const FMPEquitySearchQueryParamsSchema = EquitySearchQueryParamsSchema
 export type FMPEquitySearchQueryParams = z.infer<typeof FMPEquitySearchQueryParamsSchema>
@@ -37,7 +36,7 @@ export class FMPEquitySearchFetcher extends Fetcher {
     const apiKey = credentials?.fmp_api_key ?? ''
     const q = encodeURIComponent(query.query)
     const url = `https://financialmodelingprep.com/stable/search-name?query=${q}&apikey=${apiKey}`
-    return amakeRequest<Record<string, unknown>[]>(url, { responseCallback })
+    return makeRequest<Record<string, unknown>[]>(url)
   }
 
   static override transformData(

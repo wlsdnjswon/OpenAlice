@@ -6,9 +6,9 @@
 import { z } from 'zod'
 import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { PriceTargetConsensusQueryParamsSchema, PriceTargetConsensusDataSchema } from '../../../standard-models/price-target-consensus.js'
-import { applyAliases, amakeRequest } from '../../../core/provider/utils/helpers.js'
+import { applyAliases } from '../../../core/provider/utils/helpers.js'
 import { OpenBBError, EmptyDataError } from '../../../core/provider/utils/errors.js'
-import { responseCallback } from '../utils/helpers.js'
+import { makeRequest } from '../utils/helpers.js'
 
 // --- Query Params ---
 
@@ -43,7 +43,7 @@ export class FMPPriceTargetConsensusFetcher extends Fetcher {
     const getOne = async (symbol: string) => {
       const url = `https://financialmodelingprep.com/stable/price-target-consensus?symbol=${symbol}&apikey=${apiKey}`
       try {
-        const result = await amakeRequest<Record<string, unknown>[]>(url, { responseCallback })
+        const result = await makeRequest<Record<string, unknown>[]>(url)
         if (result && result.length > 0) {
           results.push(...result)
         } else {
