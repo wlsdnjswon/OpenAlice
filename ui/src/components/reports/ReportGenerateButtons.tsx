@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { reportsApi, type ReportAssetClass, type ReportIndex, type GenerateSSEEvent } from '../../api/reports'
 import { ReportGeneratingOverlay } from './ReportGeneratingOverlay'
@@ -41,6 +41,13 @@ export function ReportGenerateButtons({ symbol, assetClass, onReportCreated }: P
   }
 
   const close = () => setState({ phase: 'idle' })
+
+  // Auto-dismiss error toast after 8 seconds
+  useEffect(() => {
+    if (state.phase !== 'error') return
+    const timer = setTimeout(close, 8000)
+    return () => clearTimeout(timer)
+  }, [state.phase])
 
   return (
     <>

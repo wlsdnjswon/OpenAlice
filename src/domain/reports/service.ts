@@ -12,7 +12,7 @@ import {
   buildGenericPrompt,
 } from './prompts.js'
 
-export type ProgressCallback = (step: string, message: string) => void
+export type ProgressCallback = (step: string, message: string) => Promise<void> | void
 
 export interface ReportServiceDeps {
   equityClient: EquityClientLike
@@ -77,7 +77,7 @@ export class ReportService {
     try {
       if (assetClass === 'equity') {
         if (type === 'short') {
-          onProgress('data', t('시장 데이터 수집 중...', 'Collecting market data...'))
+          await onProgress('data', t('시장 데이터 수집 중...', 'Collecting market data...'))
           const [historical, profileArr, news] = await Promise.all([
             equityClient.getHistorical({ symbol, start_date: this.nDaysAgo(90), interval: '1d' }).catch(() => []),
             equityClient.getProfile({ symbol, provider: 'fmp' }).catch(() =>
@@ -85,7 +85,7 @@ export class ReportService {
             newsProvider.getNewsV2({ endTime: new Date(), lookback: '1d', limit: 12 }).catch(() => []),
           ])
 
-          onProgress('indicators', t('기술적 지표 계산 중...', 'Calculating indicators...'))
+          await onProgress('indicators', t('기술적 지표 계산 중...', 'Calculating indicators...'))
           const bars = (historical as Array<Record<string, unknown>>)
             .filter((d) => d.close != null)
             .sort((a, b) => String(a.date).localeCompare(String(b.date)))
@@ -105,7 +105,7 @@ export class ReportService {
           dataSnapshot = { symbol, assetClass, type, bars: bars.length, rsi, macd, bb, volumeRatio, change1d, lastClose, profile, newsItems }
           prompt = buildShortEquityPrompt({ symbol, lang: language, lastClose, change1d, rsi, macd, bb, volumeRatio, profile, newsItems })
         } else {
-          onProgress('data', t('재무 데이터 수집 중...', 'Collecting financial data...'))
+          await onProgress('data', t('재무 데이터 수집 중...', 'Collecting financial data...'))
           const [profileArr, income, balance, cash, metrics, estimates, insider, historical, news] = await Promise.all([
             equityClient.getProfile({ symbol, provider: 'fmp' }).catch(() =>
               equityClient.getProfile({ symbol, provider: 'yfinance' }).catch(() => [])),
@@ -123,7 +123,7 @@ export class ReportService {
             .filter((d) => d.close != null)
             .sort((a, b) => String(a.date).localeCompare(String(b.date)))
           const price52wHigh = bars.reduce((m, d) => Math.max(m, Number(d.high ?? 0)), 0)
-          const price52wLow = bars.reduce((m, d) => Math.min(m === 0 ? 1e9 : m, Number(d.low ?? 1e9)), 1e9)
+          const price52wLow = bars.reduce((m, d) => Math.min(m, Number(d.low ?? m)), Infinity)
           const lastClose = Number(bars.at(-1)?.close ?? 0)
           const newsItems = news.map((n) => ({ title: n.title, source: n.metadata.source, time: n.time.toISOString() }))
 
@@ -141,13 +141,13 @@ export class ReportService {
           prompt = buildLongEquityPrompt({ symbol, lang: language, lastClose, price52wHigh, price52wLow, dataSnapshot: dataSnapshot as Record<string, unknown> })
         }
       } else if (assetClass === 'crypto') {
-        onProgress('data', t('가격 데이터 수집 중...', 'Collecting price data...'))
+        await onProgress('data', t('가격 데이터 수집 중...', 'Collecting price data...'))
         const [historical, news] = await Promise.all([
           cryptoClient.getHistorical({ symbol, start_date: this.nDaysAgo(90), interval: '1d' }).catch(() => []),
           newsProvider.getNewsV2({ endTime: new Date(), lookback: type === 'short' ? '1d' : '7d', limit: type === 'short' ? 10 : 15 }).catch(() => []),
         ])
 
-        onProgress('indicators', t('기술적 지표 계산 중...', 'Calculating indicators...'))
+        await onProgress('indicators', t('기술적 지표 계산 중...', 'Calculating indicators...'))
         const bars = (historical as Array<Record<string, unknown>>)
           .filter((d) => d.close != null)
           .sort((a, b) => String(a.date).localeCompare(String(b.date)))
@@ -166,14 +166,14 @@ export class ReportService {
         prompt = buildCryptoPrompt({ symbol, type, lang: language, lastClose, change1d, rsi, macd, bb, volumeRatio, newsItems })
       } else {
         // currency / commodity
-        onProgress('data', t('관련 뉴스 수집 중...', 'Collecting related news...'))
+        await onProgress('data', t('관련 뉴스 수집 중...', 'Collecting related news...'))
         const news = await newsProvider.getNewsV2({ endTime: new Date(), lookback: type === 'short' ? '1d' : '7d', limit: 10 }).catch(() => [])
         const newsItems = news.map((n) => ({ title: n.title, source: n.metadata.source, time: n.time.toISOString() }))
         dataSnapshot = { symbol, assetClass, type, newsItems }
         prompt = buildGenericPrompt({ symbol, assetClass: assetClass as 'currency' | 'commodity', type, lang: language, newsItems })
       }
 
-      onProgress('generating', t('AI 분석 보고서 생성 중...', 'Generating AI analysis report...'))
+      await onProgress('generating', t('AI 분석 보고서 생성 중...', 'Generating AI analysis report...'))
       const result = await agentCenter.ask(prompt)
       const content = result.text || ''
       const completedAt = new Date().toISOString()

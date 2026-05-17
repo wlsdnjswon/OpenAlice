@@ -18,8 +18,6 @@ const STATUS_BADGE: Record<string, string> = {
   error: 'bg-red/10 text-red border-red/20',
 }
 
-const TYPE_LABEL = { short: '단기', long: '장기' }
-
 export function ReportListPanel({ symbol, assetClass, refreshKey }: Props) {
   const { t } = useTranslation()
   const [reports, setReports] = useState<ReportIndex[]>([])
@@ -62,7 +60,7 @@ export function ReportListPanel({ symbol, assetClass, refreshKey }: Props) {
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className={`shrink-0 px-1 py-0.5 text-[9px] rounded border font-medium uppercase tracking-wide ${TYPE_LABEL[r.type] === '단기' ? 'bg-accent/10 text-accent border-accent/20' : 'bg-green/10 text-green border-green/20'}`}>
+                  <span className={`shrink-0 px-1 py-0.5 text-[9px] rounded border font-medium uppercase tracking-wide ${r.type === 'short' ? 'bg-accent/10 text-accent border-accent/20' : 'bg-green/10 text-green border-green/20'}`}>
                     {r.type === 'short' ? t('reports.typeShort') : t('reports.typeLong')}
                   </span>
                   <span className={`shrink-0 px-1 py-0.5 text-[9px] rounded border ${STATUS_BADGE[r.status] ?? ''}`}>

@@ -1,6 +1,5 @@
 import { appendFile, readFile, writeFile, mkdir, rm } from 'node:fs/promises'
-import { join } from 'node:path'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import type { ReportIndex, ReportDetail, ReportType, ReportAssetClass } from './types.js'
 
 const REPORTS_DIR = resolve('data/reports')
