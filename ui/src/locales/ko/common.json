@@ -379,5 +379,34 @@
       "externalDesc": "외부 OpenBB 호환 HTTP 엔드포인트에 연결합니다.",
       "apiUrl": "API URL"
     }
+  },
+  "reports": {
+    "shortBtn": "단기 분석",
+    "longBtn": "장기 분석",
+    "generatingShort": "단기 투자 보고서 생성 중…",
+    "generatingLong": "장기 투자 보고서 생성 중…",
+    "generatingHint": "데이터 수집 및 AI 분석에 20~60초 정도 소요됩니다.",
+    "starting": "시작하는 중…",
+    "generateError": "보고서 생성 실패",
+    "listTitle": "투자 분석 보고서",
+    "listInfo": "이 종목에 대해 AI가 생성한 투자 분석 보고서입니다. 클릭하면 전문을 볼 수 있습니다.",
+    "noReports": "보고서가 없습니다. 위의 분석 버튼을 클릭하여 생성하세요.",
+    "detail": "보고서 상세",
+    "typeShort": "단기",
+    "typeLong": "장기",
+    "generatedIn": "생성 시간: {{duration}}",
+    "deleteTitle": "보고서 삭제",
+    "deleteMessage": "이 보고서는 영구적으로 삭제됩니다.",
+    "status": {
+      "generating": "생성 중",
+      "done": "완료",
+      "error": "오류"
+    }
+  },
+  "common": {
+    "loading": "로딩 중…",
+    "cancel": "취소",
+    "dismiss": "닫기",
+    "delete": "삭제"
   }
 }

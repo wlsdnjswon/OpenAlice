@@ -379,5 +379,34 @@
       "externalDesc": "Connects to an external OpenBB-compatible HTTP endpoint.",
       "apiUrl": "API URL"
     }
+  },
+  "reports": {
+    "shortBtn": "Short-Term Analysis",
+    "longBtn": "Long-Term Analysis",
+    "generatingShort": "Generating Short-Term Report…",
+    "generatingLong": "Generating Long-Term Report…",
+    "generatingHint": "This may take 20–60 seconds depending on data availability.",
+    "starting": "Starting…",
+    "generateError": "Report generation failed",
+    "listTitle": "Investment Reports",
+    "listInfo": "AI-generated investment reports for this symbol. Click to view full report.",
+    "noReports": "No reports yet. Click the analysis buttons above to generate one.",
+    "detail": "Report Detail",
+    "typeShort": "Short",
+    "typeLong": "Long",
+    "generatedIn": "Generated in {{duration}}",
+    "deleteTitle": "Delete Report",
+    "deleteMessage": "This report will be permanently deleted.",
+    "status": {
+      "generating": "Generating",
+      "done": "Done",
+      "error": "Error"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss",
+    "delete": "Delete"
   }
 }

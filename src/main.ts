@@ -52,6 +52,7 @@ import { createMetricsListener } from './task/metrics/index.js'
 import { createAgentWorkListener } from './core/agent-work-listener.js'
 import { NewsCollectorStore, NewsCollector } from './domain/news/index.js'
 import { createNewsArchiveTools } from './tool/news.js'
+import { ReportService } from './domain/reports/index.js'
 
 // ==================== Persistence paths ====================
 
@@ -470,6 +471,17 @@ async function main() {
 
   // ==================== Engine Context ====================
 
+  // ==================== Report Service ====================
+
+  const reportService = new ReportService({
+    equityClient,
+    cryptoClient,
+    commodityClient,
+    newsProvider: newsStore,
+    agentCenter,
+  })
+  await reportService.init()
+
   const ctx: EngineContext = {
     config, connectorCenter, notificationsStore, agentCenter, eventLog, toolCallLog, heartbeat, cronEngine, toolCenter,
     listenerRegistry,
@@ -478,6 +490,7 @@ async function main() {
     marketSearch,
     utaManager, fxService, snapshotService,
     newsProvider: newsStore,
+    reportService,
     reconnectConnectors,
   }
 

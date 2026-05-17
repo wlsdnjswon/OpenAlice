@@ -1,15 +1,20 @@
+import { useState } from 'react'
 import { QuoteHeader } from '../../components/market/QuoteHeader'
 import { ProfilePanel } from '../../components/market/ProfilePanel'
 import { KeyMetricsPanel } from '../../components/market/KeyMetricsPanel'
 import { FinancialStatementsPanel } from '../../components/market/FinancialStatementsPanel'
 import { KlinePanel } from '../../components/market/KlinePanel'
 import { TradeableContractsPanel } from '../../components/market/TradeableContractsPanel'
+import { ReportGenerateButtons } from '../../components/reports/ReportGenerateButtons'
+import { ReportListPanel } from '../../components/reports/ReportListPanel'
 
 interface Props {
   symbol: string
 }
 
 export function EquityDetail({ symbol }: Props) {
+  const [reportRefreshKey, setReportRefreshKey] = useState(0)
+
   return (
     <div className="flex flex-col gap-3">
       <QuoteHeader symbol={symbol} />
@@ -19,9 +24,20 @@ export function EquityDetail({ symbol }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <ProfilePanel symbol={symbol} />
+        <ProfilePanel
+          symbol={symbol}
+          headerRight={
+            <ReportGenerateButtons
+              symbol={symbol}
+              assetClass="equity"
+              onReportCreated={() => setReportRefreshKey((k) => k + 1)}
+            />
+          }
+        />
         <KeyMetricsPanel symbol={symbol} />
       </div>
+
+      <ReportListPanel symbol={symbol} assetClass="equity" refreshKey={reportRefreshKey} />
 
       <TradeableContractsPanel symbol={symbol} assetClass="equity" />
 

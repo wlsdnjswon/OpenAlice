@@ -5,9 +5,10 @@ import { fmtInt } from './format'
 
 interface Props {
   symbol: string
+  headerRight?: React.ReactNode
 }
 
-export function ProfilePanel({ symbol }: Props) {
+export function ProfilePanel({ symbol, headerRight }: Props) {
   const [profile, setProfile] = useState<EquityProfile | null>(null)
   const [provider, setProvider] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,7 +48,7 @@ export function ProfilePanel({ symbol }: Props) {
   ].join('\n')
 
   return (
-    <Card title="Profile" info={info}>
+    <Card title="Profile" info={info} right={headerRight}>
       {loading && <div className="text-[12px] text-text-muted">Loading…</div>}
       {error && !loading && <div className="text-[12px] text-red">{error}</div>}
       {!loading && !error && profile && (

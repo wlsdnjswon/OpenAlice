@@ -15,6 +15,7 @@ import type { ToolCenter } from './tool-center.js'
 import type { ListenerRegistry } from './listener-registry.js'
 import type { EventBus } from './event-bus.js'
 import type { INotificationsStore } from './notifications-store.js'
+import type { ReportService } from '../domain/reports/index.js'
 
 export type { Config, WebChannel }
 
@@ -57,6 +58,8 @@ export interface EngineContext {
   fxService: FxService
   snapshotService?: SnapshotService
   newsProvider?: INewsProvider
+  /** AI-powered investment report generation service. */
+  reportService?: ReportService
   /** Reconnect connector plugins (Telegram, MCP-Ask, etc.). */
   reconnectConnectors: () => Promise<ReconnectResult>
 }
