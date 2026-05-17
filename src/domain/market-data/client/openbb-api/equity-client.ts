@@ -8,7 +8,7 @@
 import type { OBBjectResponse } from '../../equity/types/base'
 import { buildCredentialsHeader } from '../../credential-map'
 import type {
-  EquitySearchData, EquityHistoricalData, EquityInfoData, KeyMetricsData,
+  EquitySearchData, EquityHistoricalData, EquityQuoteData, EquityInfoData, KeyMetricsData,
   IncomeStatementData, BalanceSheetData, CashFlowStatementData, FinancialRatiosData,
   PriceTargetConsensusData, CalendarEarningsData, InsiderTradingData, EquityDiscoveryData,
 } from '@traderalice/opentypebb'
@@ -31,7 +31,7 @@ export class OpenBBEquityClient {
   }
 
   async getQuote(params: Record<string, unknown>) {
-    return this.request('/price/quote', params)
+    return this.request<EquityQuoteData>('/price/quote', params)
   }
 
   async getNBBO(params: Record<string, unknown>) {

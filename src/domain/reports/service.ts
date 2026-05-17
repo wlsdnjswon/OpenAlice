@@ -120,7 +120,7 @@ export class ReportService {
           await onProgress('data', t('재무 데이터 수집 중...', 'Collecting financial data...'))
           // getEstimateConsensus and getInsiderTrading are FMP-premium-only for non-US symbols.
           // Skip them for KRX stocks to avoid 402 errors and empty sections.
-          const [profileArr, income, balance, cash, metrics, estimates, insider, historical, news] = await Promise.all([
+          const [profileArr, income, balance, cash, metrics, estimates, insider, quote, news] = await Promise.all([
             equityClient.getProfile({ symbol, provider: ep }).catch(() =>
               equityClient.getProfile({ symbol, provider: 'yfinance' }).catch(() => [])),
             equityClient.getIncomeStatement({ symbol, period: 'annual', limit: 4, provider: ep }).catch(() => []),
@@ -133,16 +133,14 @@ export class ReportService {
             ep === 'fmp'
               ? equityClient.getInsiderTrading({ symbol, provider: 'fmp' }).catch(() => [])
               : Promise.resolve([]),
-            equityClient.getHistorical({ symbol, start_date: this.nDaysAgo(365), interval: '1w' }).catch(() => []),
+            equityClient.getQuote({ symbol, provider: ep }).catch(() => []),
             newsProvider.getNewsV2({ endTime: new Date(), lookback: '7d', limit: 15 }).catch(() => []),
           ])
 
-          const bars = (historical as Array<Record<string, unknown>>)
-            .filter((d) => d.close != null)
-            .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-          const price52wHigh = bars.reduce((m, d) => Math.max(m, Number(d.high ?? 0)), 0)
-          const price52wLow = bars.reduce((m, d) => Math.min(m, Number(d.low ?? m)), Infinity)
-          const lastClose = Number(bars.at(-1)?.close ?? 0)
+          const q = (quote as Array<Record<string, unknown>>)[0] ?? {}
+          const lastClose = Number(q.last_price ?? q.close ?? q.prev_close ?? 0)
+          const price52wHigh = Number(q.year_high ?? 0)
+          const price52wLow = Number(q.year_low ?? 0)
           const newsItems = news.map((n) => ({ title: n.title, source: n.metadata.source, time: n.time.toISOString() }))
 
           dataSnapshot = {

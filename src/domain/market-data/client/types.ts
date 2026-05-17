@@ -9,7 +9,7 @@
 
 import type {
   // Equity
-  EquitySearchData, EquityHistoricalData, EquityInfoData, KeyMetricsData,
+  EquitySearchData, EquityHistoricalData, EquityQuoteData, EquityInfoData, KeyMetricsData,
   IncomeStatementData, BalanceSheetData, CashFlowStatementData, FinancialRatiosData,
   PriceTargetConsensusData, CalendarEarningsData, InsiderTradingData, EquityDiscoveryData,
   // Crypto
@@ -35,6 +35,7 @@ import type {
 export interface EquityClientLike {
   search(params: Record<string, unknown>): Promise<EquitySearchData[]>
   getHistorical(params: Record<string, unknown>): Promise<EquityHistoricalData[]>
+  getQuote(params: Record<string, unknown>): Promise<EquityQuoteData[]>
   getProfile(params: Record<string, unknown>): Promise<EquityInfoData[]>
   getKeyMetrics(params: Record<string, unknown>): Promise<KeyMetricsData[]>
   getIncomeStatement(params: Record<string, unknown>): Promise<IncomeStatementData[]>
