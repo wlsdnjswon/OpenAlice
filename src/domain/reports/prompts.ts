@@ -172,6 +172,7 @@ export function buildLongEquityPrompt(p: LongEquityParams): string {
   const sector = String(profile.sector ?? 'Unknown')
   const industry = String(profile.industry_category ?? profile.industry_group ?? '')
   const desc = String(profile.long_description ?? profile.short_description ?? '')
+  const dataNote = snap.dataNote as string | undefined
 
   const metrics = (snap.metrics as unknown[]) ?? []
   const income = (snap.income as unknown[]) ?? []
@@ -181,7 +182,7 @@ export function buildLongEquityPrompt(p: LongEquityParams): string {
   const insider = (snap.insider as unknown[]) ?? []
   const newsItems = (snap.newsItems as Array<{ title: string; source: string | null; time: string }>) ?? []
 
-  return `${langInstruction(p.lang)}
+  return `${langInstruction(p.lang)}${dataNote ? `\n\n> **Data note**: ${dataNote}` : ''}
 
 You are an expert value investor and equity analyst. Generate a comprehensive **long-term investment report** for ${p.symbol} (${name}).
 

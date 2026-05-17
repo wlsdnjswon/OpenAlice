@@ -41,6 +41,17 @@ export class ReportService {
     return d.toISOString().slice(0, 10)
   }
 
+  /**
+   * KRX stocks (.KS / .KQ) have limited FMP coverage on free plans:
+   * - key-metrics returns 0 rows
+   * - price-target-consensus throws 402 (premium endpoint)
+   * - insider-trading has no data
+   * Use yfinance for these symbols to avoid noisy 402 errors and empty sections.
+   */
+  private equityProvider(symbol: string): string {
+    return symbol.endsWith('.KS') || symbol.endsWith('.KQ') ? 'yfinance' : 'fmp'
+  }
+
   private buildTitle(symbol: string, type: ReportType, lang: 'ko' | 'en'): string {
     const date = new Date().toLocaleDateString(lang === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric', month: 'short', day: 'numeric',
@@ -76,11 +87,12 @@ export class ReportService {
 
     try {
       if (assetClass === 'equity') {
+        const ep = this.equityProvider(symbol)
         if (type === 'short') {
           await onProgress('data', t('시장 데이터 수집 중...', 'Collecting market data...'))
           const [historical, profileArr, news] = await Promise.all([
             equityClient.getHistorical({ symbol, start_date: this.nDaysAgo(90), interval: '1d' }).catch(() => []),
-            equityClient.getProfile({ symbol, provider: 'fmp' }).catch(() =>
+            equityClient.getProfile({ symbol, provider: ep }).catch(() =>
               equityClient.getProfile({ symbol, provider: 'yfinance' }).catch(() => [])),
             newsProvider.getNewsV2({ endTime: new Date(), lookback: '1d', limit: 12 }).catch(() => []),
           ])
@@ -106,15 +118,21 @@ export class ReportService {
           prompt = buildShortEquityPrompt({ symbol, lang: language, lastClose, change1d, rsi, macd, bb, volumeRatio, profile, newsItems })
         } else {
           await onProgress('data', t('재무 데이터 수집 중...', 'Collecting financial data...'))
+          // getEstimateConsensus and getInsiderTrading are FMP-premium-only for non-US symbols.
+          // Skip them for KRX stocks to avoid 402 errors and empty sections.
           const [profileArr, income, balance, cash, metrics, estimates, insider, historical, news] = await Promise.all([
-            equityClient.getProfile({ symbol, provider: 'fmp' }).catch(() =>
+            equityClient.getProfile({ symbol, provider: ep }).catch(() =>
               equityClient.getProfile({ symbol, provider: 'yfinance' }).catch(() => [])),
-            equityClient.getIncomeStatement({ symbol, period: 'annual', limit: 4, provider: 'fmp' }).catch(() => []),
-            equityClient.getBalanceSheet({ symbol, period: 'annual', limit: 4, provider: 'fmp' }).catch(() => []),
-            equityClient.getCashFlow({ symbol, period: 'annual', limit: 4, provider: 'fmp' }).catch(() => []),
-            equityClient.getKeyMetrics({ symbol, limit: 4, provider: 'fmp' }).catch(() => []),
-            equityClient.getEstimateConsensus({ symbol, provider: 'fmp' }).catch(() => []),
-            equityClient.getInsiderTrading({ symbol, provider: 'fmp' }).catch(() => []),
+            equityClient.getIncomeStatement({ symbol, period: 'annual', limit: 4, provider: ep }).catch(() => []),
+            equityClient.getBalanceSheet({ symbol, period: 'annual', limit: 4, provider: ep }).catch(() => []),
+            equityClient.getCashFlow({ symbol, period: 'annual', limit: 4, provider: ep }).catch(() => []),
+            equityClient.getKeyMetrics({ symbol, limit: 4, provider: ep }).catch(() => []),
+            ep === 'fmp'
+              ? equityClient.getEstimateConsensus({ symbol, provider: 'fmp' }).catch(() => [])
+              : Promise.resolve([]),
+            ep === 'fmp'
+              ? equityClient.getInsiderTrading({ symbol, provider: 'fmp' }).catch(() => [])
+              : Promise.resolve([]),
             equityClient.getHistorical({ symbol, start_date: this.nDaysAgo(365), interval: '1w' }).catch(() => []),
             newsProvider.getNewsV2({ endTime: new Date(), lookback: '7d', limit: 15 }).catch(() => []),
           ])
@@ -129,6 +147,7 @@ export class ReportService {
 
           dataSnapshot = {
             symbol, assetClass, type,
+            provider: ep,
             profile: (profileArr as unknown[])[0] ?? null,
             income: (income as unknown[]).slice(0, 4),
             balance: (balance as unknown[]).slice(0, 4),
@@ -137,6 +156,9 @@ export class ReportService {
             estimates: (estimates as unknown[]).slice(0, 3),
             insider: (insider as unknown[]).slice(0, 10),
             lastClose, price52wHigh, price52wLow, newsItems,
+            dataNote: ep === 'yfinance'
+              ? 'This is a Korean/non-US stock. Analyst price-target consensus and insider trading filings are not available. Financial data sourced from yfinance.'
+              : undefined,
           }
           prompt = buildLongEquityPrompt({ symbol, lang: language, lastClose, price52wHigh, price52wLow, dataSnapshot: dataSnapshot as Record<string, unknown> })
         }
