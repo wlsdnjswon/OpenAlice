@@ -64,6 +64,13 @@ function matchScore(query: string, r: MarketSearchResult): number {
   return 10
 }
 
+/** Cap online (yfinance) searches so slow responses don't block local results. */
+const ONLINE_TIMEOUT_MS = 2500
+
+function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T | []> {
+  return Promise.race([p, new Promise<[]>((res) => setTimeout(() => res([]), ms))])
+}
+
 export async function aggregateSymbolSearch(
   deps: MarketSearchDeps,
   query: string,
@@ -91,8 +98,8 @@ export async function aggregateSymbolSearch(
     .map((r) => ({ ...r, assetClass: 'commodity' as const }))
 
   const [cryptoSettled, currencySettled] = await Promise.allSettled([
-    deps.cryptoClient.search({ query: q, provider: 'yfinance' }),
-    deps.currencyClient.search({ query: q, provider: 'yfinance' }),
+    raceTimeout(deps.cryptoClient.search({ query: q, provider: 'yfinance' }), ONLINE_TIMEOUT_MS),
+    raceTimeout(deps.currencyClient.search({ query: q, provider: 'yfinance' }), ONLINE_TIMEOUT_MS),
   ])
 
   const cryptoResults = (cryptoSettled.status === 'fulfilled' ? cryptoSettled.value : []).map(

@@ -33,6 +33,7 @@ export function MarketSidebar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
+  const [composing, setComposing] = useState(false)
 
   const watchlist = useWatchlist((s) => s.entries)
   const removeFromWatchlist = useWatchlist((s) => s.remove)
@@ -46,6 +47,7 @@ export function MarketSidebar() {
     focusedSpec.params.symbol === symbol
 
   useEffect(() => {
+    if (composing) return
     const q = query.trim()
     if (!q) {
       setResults([])
@@ -65,7 +67,7 @@ export function MarketSidebar() {
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, composing])
 
   const handleSelectResult = (r: SearchResult) => {
     const sym = resultSymbol(r)
@@ -81,6 +83,8 @@ export function MarketSidebar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onCompositionStart={() => setComposing(true)}
+          onCompositionEnd={(e) => { setComposing(false); setQuery((e.target as HTMLInputElement).value) }}
           placeholder="Search assets…"
           className="w-full px-2.5 py-1.5 bg-bg text-text border border-border rounded-md text-[13px] outline-none focus:border-accent"
         />

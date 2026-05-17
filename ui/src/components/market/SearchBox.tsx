@@ -27,9 +27,11 @@ export function SearchBox() {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(0)
+  const [composing, setComposing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (composing) return
     const q = query.trim()
     if (!q) {
       setResults([])
@@ -50,7 +52,7 @@ export function SearchBox() {
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, composing])
 
   useEffect(() => {
     const onClickAway = (e: MouseEvent) => {
@@ -99,6 +101,8 @@ export function SearchBox() {
         placeholder={t('market.searchPlaceholder')}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+        onCompositionStart={() => setComposing(true)}
+        onCompositionEnd={(e) => { setComposing(false); setQuery((e.target as HTMLInputElement).value) }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
       />
