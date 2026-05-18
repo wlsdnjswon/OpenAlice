@@ -64,27 +64,24 @@ export function KrxFlowPanel({ symbol }: Props) {
     setLoading(true)
 
     // Load from the most-recent KRX report for this symbol, if any
-    reportsApi.list({ symbol, assetClass: 'equity', limit: 10 }).then((res) => {
-      if (cancelled) return
-      const krxReport = res.reports
-        .filter((r) => r.status === 'done')
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .find((r) => r.title.includes('한국 특화') || r.title.includes('KRX-Enhanced'))
+    reportsApi.list({ symbol, assetClass: 'equity', limit: 10 })
+      .then(async (res) => {
+        if (cancelled) return
+        const krxReport = res.reports
+          .filter((r) => r.status === 'done')
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .find((r) => r.title.includes('한국 특화') || r.title.includes('KRX-Enhanced'))
 
-      if (!krxReport) { setLoading(false); return }
-      return reportsApi.get(krxReport.id)
-    }).then((detail) => {
-      if (cancelled || !detail) { setLoading(false); return }
-      const snap = detail.dataSnapshot as Record<string, unknown>
-      const krxData = snap.krxData as KrxFlowData | undefined
-      if (krxData) setData(krxData)
-      setLoading(false)
-    }).catch((e) => {
-      if (!cancelled) {
-        setError(String(e))
-        setLoading(false)
-      }
-    })
+        if (!krxReport) return
+
+        const detail = await reportsApi.get(krxReport.id)
+        if (cancelled) return
+        const snap = detail.dataSnapshot as Record<string, unknown>
+        const krxData = snap.krxData as KrxFlowData | undefined
+        if (krxData) setData(krxData)
+      })
+      .catch((e) => { if (!cancelled) setError(String(e)) })
+      .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
   }, [symbol])

@@ -22,6 +22,7 @@ export class KiwoomAuth {
 
   private cachedToken: string | null = null
   private expiresAt: number = 0 // epoch ms
+  private inflightRefresh: Promise<string> | null = null
 
   constructor(appKey: string, secretKey: string, useMock = false) {
     this.appKey = appKey
@@ -29,12 +30,13 @@ export class KiwoomAuth {
     this.useMock = useMock
   }
 
-  /** Returns a valid Bearer token, refreshing if needed. */
+  /** Returns a valid Bearer token, refreshing if needed. Concurrent callers share one in-flight refresh. */
   async getToken(): Promise<string> {
-    if (this.cachedToken && Date.now() < this.expiresAt) {
-      return this.cachedToken
+    if (this.cachedToken && Date.now() < this.expiresAt) return this.cachedToken
+    if (!this.inflightRefresh) {
+      this.inflightRefresh = this.refresh().finally(() => { this.inflightRefresh = null })
     }
-    return this.refresh()
+    return this.inflightRefresh
   }
 
   private async refresh(): Promise<string> {

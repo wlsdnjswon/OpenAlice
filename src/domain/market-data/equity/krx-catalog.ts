@@ -73,7 +73,6 @@ const KOSPI_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '023530.KS', name: '롯데쇼핑',            nameEn: 'Lotte Shopping',            sector: 'Retail' },
   { symbol: '006400.KS', name: '삼성SDI',            nameEn: 'Samsung SDI',               sector: 'Batteries' },
   { symbol: '373220.KS', name: 'LG에너지솔루션',        nameEn: 'LG Energy Solution',        sector: 'Batteries' },
-  { symbol: '247540.KS', name: '에코프로비엠',          nameEn: 'EcoPro BM',                sector: 'Batteries' },
   { symbol: '086280.KS', name: '현대글로비스',          nameEn: 'Hyundai Glovis',            sector: 'Logistics' },
   { symbol: '000100.KS', name: '유한양행',            nameEn: 'Yuhan Corp',                sector: 'Pharma' },
   { symbol: '033780.KS', name: 'KT&G',              nameEn: 'KT&G Corp',                 sector: 'Consumer' },

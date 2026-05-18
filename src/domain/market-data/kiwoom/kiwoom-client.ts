@@ -50,6 +50,13 @@ async function callKiwoom<T>(
   }
 
   const data = await res.json() as T & { return_code?: number; return_msg?: string }
+
+  // Kiwoom can return HTTP 200 with a non-zero return_code for API-level errors
+  // (invalid symbol, insufficient permissions, etc.). Fail fast so callers see the real error.
+  if (data.return_code !== undefined && data.return_code !== 0) {
+    throw new Error(`Kiwoom ${apiId} API error ${data.return_code}: ${data.return_msg ?? 'unknown'}`)
+  }
+
   return {
     data,
     contYn: res.headers.get('cont-yn') ?? 'N',

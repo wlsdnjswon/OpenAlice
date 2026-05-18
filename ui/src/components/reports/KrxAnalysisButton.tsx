@@ -26,10 +26,9 @@ export function KrxAnalysisButton({ symbol, type, onReportCreated }: Props) {
   const { t, i18n } = useTranslation()
   const [state, setState] = useState<State>({ phase: 'idle' })
   const language = i18n.language.startsWith('ko') ? 'ko' : 'en'
-  const ko = language === 'ko'
 
   const handleClick = async () => {
-    setState({ phase: 'generating', message: ko ? '시작하는 중…' : 'Starting…' })
+    setState({ phase: 'generating', message: t('reports.starting') })
     try {
       const report = await reportsApi.generateKrx(
         { symbol, type, language },
@@ -59,11 +58,10 @@ export function KrxAnalysisButton({ symbol, type, onReportCreated }: Props) {
       <button
         onClick={handleClick}
         disabled={state.phase === 'generating'}
-        title={ko ? '키움 API 기반 기관/외인 수급 데이터를 포함한 한국 특화 분석' : 'Korean market analysis with institutional/foreign flow data (Kiwoom API)'}
+        title={i18n.language.startsWith('ko') ? '키움 API 기반 기관/외인 수급 데이터를 포함한 한국 특화 분석' : 'Korean market analysis with institutional/foreign flow data (Kiwoom API)'}
         className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <span>🇰🇷</span>
-        <span>{ko ? '수급 포함 분석' : 'KRX Analysis'}</span>
+        {type === 'short' ? t('reports.krxShortBtn') : t('reports.krxLongBtn')}
       </button>
 
       {state.phase === 'generating' && (

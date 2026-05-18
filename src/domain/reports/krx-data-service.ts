@@ -18,14 +18,18 @@ export interface KrxFlowData {
   themes: ThemeGroup[]
 }
 
+/** Format a Date as YYYYMMDD in KST (UTC+9). Using UTC here gives the wrong date between 15:00–24:00 UTC. */
+function kstDateString(d: Date): string {
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
+  return kst.toISOString().slice(0, 10).replace(/-/g, '')
+}
+
 function nDaysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10).replace(/-/g, '')
+  return kstDateString(new Date(Date.now() - n * 24 * 60 * 60 * 1000))
 }
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  return kstDateString(new Date())
 }
 
 /** Strip .KS / .KQ suffix to get the bare 6-digit code. */
