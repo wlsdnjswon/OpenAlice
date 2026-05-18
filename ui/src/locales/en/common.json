@@ -383,6 +383,8 @@
   "reports": {
     "shortBtn": "Short-Term Analysis",
     "longBtn": "Long-Term Analysis",
+    "krxShortBtn": "🇰🇷 KRX Short",
+    "krxLongBtn": "🇰🇷 KRX Long",
     "generatingShort": "Generating Short-Term Report…",
     "generatingLong": "Generating Long-Term Report…",
     "generatingHint": "This may take 20–60 seconds depending on data availability.",

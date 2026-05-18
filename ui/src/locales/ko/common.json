@@ -383,6 +383,8 @@
   "reports": {
     "shortBtn": "단기 분석",
     "longBtn": "장기 분석",
+    "krxShortBtn": "🇰🇷 단기 수급분석",
+    "krxLongBtn": "🇰🇷 장기 수급분석",
     "generatingShort": "단기 투자 보고서 생성 중…",
     "generatingLong": "장기 투자 보고서 생성 중…",
     "generatingHint": "데이터 수집 및 AI 분석에 20~60초 정도 소요됩니다.",

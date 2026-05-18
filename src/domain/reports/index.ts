@@ -1,4 +1,6 @@
 export { ReportService } from './service.js'
 export { ReportStore } from './store.js'
+export { KrxDataService } from './krx-data-service.js'
 export type { ReportIndex, ReportDetail, ReportType, ReportStatus, ReportAssetClass } from './types.js'
 export type { ProgressCallback, ReportServiceDeps } from './service.js'
+export type { KrxFlowData } from './krx-data-service.js'

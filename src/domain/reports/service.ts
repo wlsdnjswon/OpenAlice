@@ -11,6 +11,8 @@ import {
   buildCryptoPrompt,
   buildGenericPrompt,
 } from './prompts.js'
+import { buildKrxShortPrompt, buildKrxLongPrompt } from './prompts-krx.js'
+import type { KrxDataService } from './krx-data-service.js'
 
 export type ProgressCallback = (step: string, message: string) => Promise<void> | void
 
@@ -20,6 +22,7 @@ export interface ReportServiceDeps {
   commodityClient: CommodityClientLike
   newsProvider: INewsProvider
   agentCenter: AgentCenter
+  krxDataService?: KrxDataService
 }
 
 export class ReportService {
@@ -206,6 +209,120 @@ export class ReportService {
       await this.store.saveDetail(detail)
       await this.store.updateIndex(id, { status: 'done', completedAt })
 
+      return detail
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      await this.store.updateIndex(id, { status: 'error', errorMessage })
+      throw err
+    }
+  }
+
+  /**
+   * KRX-enhanced analysis — same pipeline as generate() but injects
+   * institutional/foreign flow + theme data from Kiwoom API.
+   * Falls back to standard equity analysis if krxDataService is missing.
+   */
+  async generateKrx(
+    symbol: string,
+    type: ReportType,
+    language: 'ko' | 'en',
+    onProgress: ProgressCallback,
+  ): Promise<ReportDetail> {
+    if (!this.deps.krxDataService) {
+      return this.generate(symbol, 'equity', type, language, onProgress)
+    }
+
+    const id = randomUUID()
+    const createdAt = new Date().toISOString()
+    const t = (ko: string, en: string) => language === 'ko' ? ko : en
+    const date = new Date().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+    })
+    const typeLabel = type === 'short'
+      ? (language === 'ko' ? '단기' : 'Short-Term')
+      : (language === 'ko' ? '장기' : 'Long-Term')
+    const title = language === 'ko'
+      ? `${symbol} 한국 특화 ${typeLabel} 분석 보고서 (${date})`
+      : `${symbol} KRX-Enhanced ${typeLabel} Report (${date})`
+
+    const indexEntry: ReportIndex = {
+      id, symbol, assetClass: 'equity', type, status: 'generating', createdAt, language, title,
+    }
+    await this.store.append(indexEntry)
+
+    const startMs = Date.now()
+    const { equityClient, newsProvider, agentCenter, krxDataService } = this.deps
+
+    try {
+      await onProgress('data', t('시장 데이터 수집 중...', 'Collecting market data...'))
+      const [historical, profileArr, news] = await Promise.all([
+        equityClient.getHistorical({ symbol, start_date: this.nDaysAgo(90), interval: '1d' }).catch(() => []),
+        equityClient.getProfile({ symbol, provider: 'yfinance' }).catch(() => []),
+        newsProvider.getNewsV2({ endTime: new Date(), lookback: type === 'short' ? '1d' : '7d', limit: type === 'short' ? 12 : 15 }).catch(() => []),
+      ])
+
+      await onProgress('krx', t('키움 수급 데이터 수집 중...', 'Collecting Kiwoom flow data...'))
+      const krxData = await krxDataService.fetch(symbol).catch(() => ({
+        foreignLatest: null,
+        institTrend: { rows: [], orgnAvg: '', forAvg: '' },
+        themes: [],
+      }))
+
+      const bars = (historical as Array<Record<string, unknown>>)
+        .filter((d) => d.close != null)
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+      const closes = bars.map((d) => Number(d.close))
+      const volumes = bars.map((d) => Number(d.volume ?? 0))
+      const lastClose = closes.at(-1) ?? 0
+      const prevClose = closes.at(-2) ?? lastClose
+      const change1d = lastClose && prevClose ? ((lastClose - prevClose) / prevClose) * 100 : 0
+      const profile = (profileArr as Array<Record<string, unknown>>)[0] ?? null
+      const newsItems = news.map((n) => ({ title: n.title, source: n.metadata.source, time: n.time.toISOString() }))
+
+      let prompt: string
+      let dataSnapshot: object
+
+      if (type === 'short') {
+        await onProgress('indicators', t('기술적 지표 계산 중...', 'Calculating indicators...'))
+        const rsi = calcRSI(closes)
+        const macd = calcMACD(closes)
+        const bb = calcBB(closes)
+        const volumeRatio = calcVolumeRatio(volumes)
+        dataSnapshot = { symbol, assetClass: 'equity', type, mode: 'krx-enhanced', bars: bars.length, rsi, macd, bb, volumeRatio, change1d, lastClose, profile, newsItems, krxData }
+        prompt = buildKrxShortPrompt({ symbol, lang: language, lastClose, change1d, rsi, macd, bb, volumeRatio, profile, newsItems, krx: krxData })
+      } else {
+        await onProgress('financials', t('재무 데이터 수집 중...', 'Collecting financial data...'))
+        const [income, balance, cash, metrics, quote] = await Promise.all([
+          equityClient.getIncomeStatement({ symbol, period: 'annual', limit: 4, provider: 'yfinance' }).catch(() => []),
+          equityClient.getBalanceSheet({ symbol, period: 'annual', limit: 4, provider: 'yfinance' }).catch(() => []),
+          equityClient.getCashFlow({ symbol, period: 'annual', limit: 4, provider: 'yfinance' }).catch(() => []),
+          equityClient.getKeyMetrics({ symbol, limit: 4, provider: 'yfinance' }).catch(() => []),
+          equityClient.getQuote({ symbol, provider: 'yfinance' }).catch(() => []),
+        ])
+        const q = (quote as Array<Record<string, unknown>>)[0] ?? {}
+        const price52wHigh = Number(q.year_high ?? 0)
+        const price52wLow = Number(q.year_low ?? 0)
+        dataSnapshot = {
+          symbol, assetClass: 'equity', type, mode: 'krx-enhanced',
+          profile, income: (income as unknown[]).slice(0, 4),
+          balance: (balance as unknown[]).slice(0, 4),
+          cash: (cash as unknown[]).slice(0, 4),
+          metrics: (metrics as unknown[]).slice(0, 4),
+          lastClose, price52wHigh, price52wLow, newsItems, krxData,
+        }
+        prompt = buildKrxLongPrompt({ symbol, lang: language, lastClose, price52wHigh, price52wLow, dataSnapshot: dataSnapshot as Record<string, unknown>, krx: krxData })
+      }
+
+      await onProgress('generating', t('AI 분석 보고서 생성 중...', 'Generating AI analysis report...'))
+      const result = await agentCenter.ask(prompt)
+      const completedAt = new Date().toISOString()
+
+      const detail: ReportDetail = {
+        id, symbol, assetClass: 'equity', type, status: 'done', createdAt, completedAt,
+        language, title, dataSnapshot, content: result.text || '', generationMs: Date.now() - startMs,
+      }
+      await this.store.saveDetail(detail)
+      await this.store.updateIndex(id, { status: 'done', completedAt })
       return detail
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)

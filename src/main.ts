@@ -53,6 +53,9 @@ import { createAgentWorkListener } from './core/agent-work-listener.js'
 import { NewsCollectorStore, NewsCollector } from './domain/news/index.js'
 import { createNewsArchiveTools } from './tool/news.js'
 import { ReportService } from './domain/reports/index.js'
+import { KrxDataService } from './domain/reports/krx-data-service.js'
+import { KiwoomAuth } from './domain/market-data/kiwoom/kiwoom-auth.js'
+import { KiwoomClient } from './domain/market-data/kiwoom/kiwoom-client.js'
 
 // ==================== Persistence paths ====================
 
@@ -223,8 +226,21 @@ async function main() {
   const symbolIndex = new SymbolIndex()
   await symbolIndex.load(equityClient)
 
+  // ==================== Kiwoom API (KRX) ====================
+
+  let kiwoomClient: KiwoomClient | undefined
+  const kiwoomAppKey = config.marketData.providerKeys.kiwoomAppKey
+  const kiwoomSecretKey = config.marketData.providerKeys.kiwoomSecretKey
+  if (kiwoomAppKey && kiwoomSecretKey) {
+    const kiwoomAuth = new KiwoomAuth(kiwoomAppKey, kiwoomSecretKey)
+    kiwoomClient = new KiwoomClient(kiwoomAuth)
+    console.log('kiwoom: API client initialized')
+  } else {
+    console.log('kiwoom: no credentials configured — KRX catalog will use static fallback')
+  }
+
   const krxCatalog = new KrxCatalog()
-  krxCatalog.load()
+  await krxCatalog.load(kiwoomClient)
 
   const commodityCatalog = new CommodityCatalog()
   commodityCatalog.load()
@@ -473,12 +489,15 @@ async function main() {
 
   // ==================== Report Service ====================
 
+  const krxDataService = kiwoomClient ? new KrxDataService(kiwoomClient) : undefined
+
   const reportService = new ReportService({
     equityClient,
     cryptoClient,
     commodityClient,
     newsProvider: newsStore,
     agentCenter,
+    krxDataService,
   })
   await reportService.init()
 
@@ -491,6 +510,7 @@ async function main() {
     utaManager, fxService, snapshotService,
     newsProvider: newsStore,
     reportService,
+    krxDataService,
     reconnectConnectors,
   }
 

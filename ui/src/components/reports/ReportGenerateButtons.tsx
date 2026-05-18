@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { reportsApi, type ReportAssetClass, type ReportIndex, type GenerateSSEEvent } from '../../api/reports'
 import { ReportGeneratingOverlay } from './ReportGeneratingOverlay'
 import { ReportDetailModal } from './ReportDetailModal'
+import { KrxAnalysisButton } from './KrxAnalysisButton'
+
+const isKrxSymbol = (sym: string) => /\.(KS|KQ)$/i.test(sym)
 
 interface Props {
   symbol: string
@@ -51,7 +54,7 @@ export function ReportGenerateButtons({ symbol, assetClass, onReportCreated }: P
 
   return (
     <>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <button
           onClick={() => handleGenerate('short')}
           disabled={state.phase === 'generating'}
@@ -66,6 +69,12 @@ export function ReportGenerateButtons({ symbol, assetClass, onReportCreated }: P
         >
           {t('reports.longBtn')}
         </button>
+        {isKrxSymbol(symbol) && (
+          <>
+            <KrxAnalysisButton symbol={symbol} type="short" onReportCreated={onReportCreated} />
+            <KrxAnalysisButton symbol={symbol} type="long" onReportCreated={onReportCreated} />
+          </>
+        )}
       </div>
 
       {state.phase === 'generating' && (

@@ -218,6 +218,9 @@ const marketDataSchema = z.object({
     benzinga: z.string().optional(),
     tiingo: z.string().optional(),
     biztoc: z.string().optional(),
+    /** Kiwoom REST API — issued at https://openapi.kiwoom.com */
+    kiwoomAppKey: z.string().optional(),
+    kiwoomSecretKey: z.string().optional(),
   }).default({}),
   backend: z.enum(['typebb-sdk', 'openbb-api']).default('typebb-sdk'),
 })

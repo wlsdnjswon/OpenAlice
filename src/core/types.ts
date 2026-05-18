@@ -16,6 +16,7 @@ import type { ListenerRegistry } from './listener-registry.js'
 import type { EventBus } from './event-bus.js'
 import type { INotificationsStore } from './notifications-store.js'
 import type { ReportService } from '../domain/reports/index.js'
+import type { KrxDataService } from '../domain/reports/krx-data-service.js'
 
 export type { Config, WebChannel }
 
@@ -60,6 +61,8 @@ export interface EngineContext {
   newsProvider?: INewsProvider
   /** AI-powered investment report generation service. */
   reportService?: ReportService
+  /** Korean market (KRX) institutional/foreign flow data service. */
+  krxDataService?: KrxDataService
   /** Reconnect connector plugins (Telegram, MCP-Ask, etc.). */
   reconnectConnectors: () => Promise<ReconnectResult>
 }

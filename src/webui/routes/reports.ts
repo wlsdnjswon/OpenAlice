@@ -82,5 +82,40 @@ export function createReportsRoutes(ctx: EngineContext): Hono {
     return c.json({ success: true })
   })
 
+  /**
+   * POST /api/reports/generate-krx — KRX-enhanced analysis.
+   * Injects Kiwoom institutional/foreign flow + theme data into the prompt.
+   * Falls back to standard equity analysis when Kiwoom is not configured.
+   */
+  app.post('/generate-krx', async (c) => {
+    if (!ctx.reportService) {
+      return c.json({ error: 'Report service not initialized' }, 503)
+    }
+
+    const body = await c.req.json() as { symbol?: string; type?: string; language?: string }
+    const symbol = body.symbol?.trim().toUpperCase()
+    if (!symbol) return c.json({ error: 'symbol is required' }, 400)
+
+    const type = body.type as 'short' | 'long'
+    if (!VALID_TYPES.has(type)) {
+      return c.json({ error: `Invalid type. Valid: ${[...VALID_TYPES].join(', ')}` }, 400)
+    }
+
+    const language = VALID_LANGUAGES.has(body.language ?? '') ? body.language as 'ko' | 'en' : 'ko'
+    const service = ctx.reportService
+
+    return streamSSE(c, async (stream) => {
+      try {
+        const report = await service.generateKrx(symbol, type, language, async (step, message) => {
+          await stream.writeSSE({ data: JSON.stringify({ type: 'progress', step, message }) })
+        })
+        await stream.writeSSE({ data: JSON.stringify({ type: 'done', report: service.store.get(report.id) }) })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await stream.writeSSE({ data: JSON.stringify({ type: 'error', message }) })
+      }
+    })
+  })
+
   return app
 }

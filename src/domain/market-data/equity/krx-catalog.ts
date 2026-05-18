@@ -1,34 +1,34 @@
 /**
- * KRX Symbol Catalog — static enumeration of major Korean listed securities.
+ * KRX Symbol Catalog — dynamic full listing via Kiwoom API (ka10099),
+ * with static fallback for the top ~80 blue-chips when no API key is set.
  *
- * Korean equities use 6-digit codes. yfinance expects:
- *   - KOSPI stocks: <code>.KS  (e.g. 005930.KS for Samsung Electronics)
- *   - KOSDAQ stocks: <code>.KQ (e.g. 035720.KQ for Kakao)
+ * Dynamic path (Kiwoom configured):
+ *   - Fetches all KOSPI + KOSDAQ stocks via ka10099 at startup.
+ *   - Caches to data/cache/equity/krx-symbols.json with 24h TTL.
+ *   - Covers the full KRX universe (2,400+ stocks).
  *
- * This catalog covers the top ~80 blue-chip and widely-traded names across
- * KOSPI and KOSDAQ. The intent is to make Korean stocks discoverable via
- * the aggregate search (marketSearchForResearch) and the market UI search box.
- * Price data is fetched via the existing yfinance backend using the .KS/.KQ
- * suffixed symbols — no separate KRX API client is required.
+ * Static fallback (no API key):
+ *   - Loads the hardcoded ~80 blue-chip entries below.
+ *   - Behaviour identical to the previous implementation.
  *
- * To extend: add entries to KOSPI_STOCKS or KOSDAQ_STOCKS below.
- * Source: KRX official listings + market-cap ranking (as of 2026).
+ * yfinance symbols:
+ *   KOSPI stocks:  <6-digit code>.KS  (e.g. 005930.KS)
+ *   KOSDAQ stocks: <6-digit code>.KQ  (e.g. 035720.KQ)
  */
 
+import { readFile, writeFile, mkdir } from 'fs/promises'
+import { resolve } from 'path'
+import type { KiwoomClient } from '../kiwoom/kiwoom-client.js'
+
 export interface KrxSymbolEntry {
-  /** yfinance ticker (6-digit code + .KS or .KQ) */
-  symbol: string
-  /** Korean company name */
-  name: string
-  /** Korean name romanization or English brand name */
-  nameEn: string
-  /** KOSPI or KOSDAQ */
+  symbol: string          // yfinance ticker (6-digit + .KS or .KQ)
+  name: string            // Korean company name
+  nameEn: string          // English name or romanization
   exchange: 'KOSPI' | 'KOSDAQ'
-  /** Sector label */
   sector: string
 }
 
-// ==================== KOSPI (시가총액 상위 종목) ====================
+// ==================== Static fallback catalog ====================
 
 const KOSPI_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '005930.KS', name: '삼성전자',           nameEn: 'Samsung Electronics',       sector: 'Technology' },
@@ -83,8 +83,6 @@ const KOSPI_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '005830.KS', name: 'DB손해보험',          nameEn: 'DB Insurance',              sector: 'Finance' },
 ]
 
-// ==================== KOSDAQ (주요 종목) ====================
-
 const KOSDAQ_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '035720.KQ', name: '카카오',             nameEn: 'Kakao Corp',                sector: 'Technology' },
   { symbol: '035900.KQ', name: 'JYP엔터테인먼트',      nameEn: 'JYP Entertainment',         sector: 'Entertainment' },
@@ -108,7 +106,6 @@ const KOSDAQ_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '251270.KQ', name: '넷마블',             nameEn: 'Netmarble',                 sector: 'Gaming' },
   { symbol: '058470.KQ', name: '리노공업',            nameEn: 'Lino Industrial',           sector: 'Technology' },
   { symbol: '357780.KQ', name: '솔브레인',            nameEn: 'Soulbrain',                 sector: 'Chemicals' },
-  { symbol: '015760.KQ', name: '한국전력',            nameEn: 'KEPCO',                     sector: 'Utilities' },
   { symbol: '450080.KQ', name: '에코프로',            nameEn: 'EcoPro',                    sector: 'Batteries' },
   { symbol: '247540.KQ', name: '에코프로비엠',          nameEn: 'EcoPro BM',                sector: 'Batteries' },
   { symbol: '091990.KQ', name: '셀트리온헬스케어',        nameEn: 'Celltrion Healthcare',      sector: 'Biotech' },
@@ -116,22 +113,125 @@ const KOSDAQ_STOCKS: Omit<KrxSymbolEntry, 'exchange'>[] = [
   { symbol: '140860.KQ', name: '파크시스템스',          nameEn: 'Park Systems',              sector: 'Technology' },
 ]
 
+// ==================== Cache helpers ====================
+
+interface CacheEnvelope {
+  cachedAt: string
+  count: number
+  entries: KrxSymbolEntry[]
+}
+
+const CACHE_FILE = resolve('data/cache/equity/krx-symbols.json')
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+async function readCache(): Promise<CacheEnvelope | null> {
+  try {
+    const raw = JSON.parse(await readFile(CACHE_FILE, 'utf-8')) as CacheEnvelope
+    return raw
+  } catch {
+    return null
+  }
+}
+
+async function writeCache(entries: KrxSymbolEntry[]): Promise<void> {
+  await mkdir(resolve('data/cache/equity'), { recursive: true })
+  const envelope: CacheEnvelope = { cachedAt: new Date().toISOString(), count: entries.length, entries }
+  await writeFile(CACHE_FILE, JSON.stringify(envelope, null, 2) + '\n')
+}
+
+function isExpired(cachedAt: string): boolean {
+  return Date.now() - new Date(cachedAt).getTime() > CACHE_TTL_MS
+}
+
+// ==================== KrxCatalog ====================
+
 export class KrxCatalog {
   private entries: KrxSymbolEntry[] = []
+  private dynamic = false
 
   get size(): number { return this.entries.length }
+  get isDynamic(): boolean { return this.dynamic }
 
-  load(): void {
+  /**
+   * Load catalog.
+   * - With kiwoomClient: fetches full KRX list (ka10099), caches 24h.
+   * - Without: loads the static ~80 blue-chip fallback.
+   */
+  async load(kiwoomClient?: KiwoomClient): Promise<void> {
+    if (kiwoomClient) {
+      await this.loadDynamic(kiwoomClient)
+    } else {
+      this.loadStatic()
+    }
+  }
+
+  private loadStatic(): void {
     this.entries = [
       ...KOSPI_STOCKS.map((s) => ({ ...s, exchange: 'KOSPI' as const })),
       ...KOSDAQ_STOCKS.map((s) => ({ ...s, exchange: 'KOSDAQ' as const })),
     ]
+    this.dynamic = false
+    console.log(`krx-catalog: loaded ${this.entries.length} symbols (static fallback)`)
   }
 
-  /**
-   * Search by symbol, Korean name, English name, or sector.
-   * Regex with fallback to substring — same pattern as SymbolIndex.
-   */
+  private async loadDynamic(client: KiwoomClient): Promise<void> {
+    // 1. Try cache
+    const cached = await readCache()
+    if (cached && !isExpired(cached.cachedAt)) {
+      this.entries = cached.entries
+      this.dynamic = true
+      console.log(`krx-catalog: loaded ${this.entries.length} symbols from cache (dynamic)`)
+      return
+    }
+
+    // 2. Fetch from Kiwoom API
+    try {
+      const [kospiRaw, kosdaqRaw] = await Promise.all([
+        client.getStockList('0'),
+        client.getStockList('10'),
+      ])
+
+      const kospi: KrxSymbolEntry[] = kospiRaw
+        .filter((e) => /^\d{6}$/.test(e.code))
+        .map((e) => ({
+          symbol: `${e.code}.KS`,
+          name: e.name,
+          nameEn: '',
+          exchange: 'KOSPI' as const,
+          sector: e.upName ?? '',
+        }))
+
+      const kosdaq: KrxSymbolEntry[] = kosdaqRaw
+        .filter((e) => /^\d{6}$/.test(e.code))
+        .map((e) => ({
+          symbol: `${e.code}.KQ`,
+          name: e.name,
+          nameEn: '',
+          exchange: 'KOSDAQ' as const,
+          sector: e.upName ?? '',
+        }))
+
+      this.entries = [...kospi, ...kosdaq]
+      this.dynamic = true
+      await writeCache(this.entries)
+      console.log(`krx-catalog: fetched ${this.entries.length} symbols from Kiwoom API (${kospi.length} KOSPI, ${kosdaq.length} KOSDAQ)`)
+      return
+    } catch (err) {
+      console.warn('krx-catalog: Kiwoom API fetch failed, trying cache:', err)
+    }
+
+    // 3. Expire cache fallback
+    if (cached) {
+      this.entries = cached.entries
+      this.dynamic = true
+      console.warn(`krx-catalog: using expired cache (${this.entries.length} symbols)`)
+      return
+    }
+
+    // 4. Final fallback: static list
+    this.loadStatic()
+  }
+
   search(pattern: string, limit = 20): KrxSymbolEntry[] {
     let test: (s: string) => boolean
     try {
@@ -157,7 +257,6 @@ export class KrxCatalog {
     return results
   }
 
-  /** Exact lookup by ticker symbol (case-insensitive). */
   resolve(symbol: string): KrxSymbolEntry | undefined {
     const upper = symbol.toUpperCase()
     return this.entries.find((e) => e.symbol.toUpperCase() === upper)
@@ -170,11 +269,10 @@ export class KrxCatalog {
 
 /**
  * Normalize a raw Korean stock input to a yfinance-compatible ticker.
- * Accepts:
- *   "005930"      → "005930.KS"  (bare 6-digit KOSPI code, no exchange hint)
- *   "005930.KS"   → "005930.KS"  (already normalized)
- *   "035720.KQ"   → "035720.KQ"  (KOSDAQ, already normalized)
- *   "삼성전자"      → undefined    (name lookup — use catalog.search() instead)
+ * "005930"    → "005930.KS"  (bare 6-digit, defaults to KOSPI)
+ * "005930.KS" → "005930.KS"  (already normalized)
+ * "035720.KQ" → "035720.KQ"  (KOSDAQ, already normalized)
+ * "삼성전자"   → undefined    (name lookup — use catalog.search() instead)
  */
 export function normalizeKrxTicker(raw: string): string | undefined {
   const trimmed = raw.trim()

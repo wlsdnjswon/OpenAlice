@@ -5,8 +5,11 @@ import { KeyMetricsPanel } from '../../components/market/KeyMetricsPanel'
 import { FinancialStatementsPanel } from '../../components/market/FinancialStatementsPanel'
 import { KlinePanel } from '../../components/market/KlinePanel'
 import { TradeableContractsPanel } from '../../components/market/TradeableContractsPanel'
+import { KrxFlowPanel } from '../../components/market/KrxFlowPanel'
 import { ReportGenerateButtons } from '../../components/reports/ReportGenerateButtons'
 import { ReportListPanel } from '../../components/reports/ReportListPanel'
+
+const isKrxSymbol = (sym: string) => /\.(KS|KQ)$/i.test(sym)
 
 interface Props {
   symbol: string
@@ -38,6 +41,8 @@ export function EquityDetail({ symbol }: Props) {
       </div>
 
       <ReportListPanel symbol={symbol} assetClass="equity" refreshKey={reportRefreshKey} />
+
+      {isKrxSymbol(symbol) && <KrxFlowPanel symbol={symbol} />}
 
       <TradeableContractsPanel symbol={symbol} assetClass="equity" />
 
