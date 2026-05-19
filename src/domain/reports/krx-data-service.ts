@@ -83,7 +83,7 @@ export class KrxDataService {
       this.client.getShortSelling(stkCd, ago20, todayStr),
       this.client.getCreditTrend(stkCd, todayStr, '1'),
       this.client.getExecutionStrengthDaily(stkCd),
-      this.client.getInvestorDetail(stkCd, todayStr, '1', '0'),
+      this.client.getInvestorDetail(stkCd, todayStr, '2', '0'),
     ])
 
     const foreignRows = foreignFlow.status === 'fulfilled' ? foreignFlow.value : []

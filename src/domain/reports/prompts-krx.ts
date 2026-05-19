@@ -55,7 +55,7 @@ function langInstruction(lang: Lang): string {
 
 function buildBasicInfoSection(krx: KrxFlowData, lang: Lang): string {
   const b = krx.basicInfo
-  if (!b) return ''
+  if (!b) return '\n'
 
   if (lang === 'ko') {
     return `
@@ -71,8 +71,8 @@ function buildBasicInfoSection(krx: KrxFlowData, lang: Lang): string {
 | BPS | ${b.bps || 'N/A'}원 |
 | 신용비율 | ${b.crd_rt || 'N/A'}% |
 | 외인소진률 | ${b.for_exh_rt || 'N/A'}% |
-| 연중최고 | ₩${b.oyr_hgst || 'N/A'} |
-| 연중최저 | ₩${b.oyr_lwst || 'N/A'} |
+| 52주 최고 | ₩${b['250hgst'] || b.oyr_hgst || 'N/A'} |
+| 52주 최저 | ₩${b['250lwst'] || b.oyr_lwst || 'N/A'} |
 | 기준가 | ₩${b.base_pric || 'N/A'} |
 | 상한가 | ₩${b.upl_pric || 'N/A'} |
 | 하한가 | ₩${b.lst_pric || 'N/A'} |
@@ -94,8 +94,8 @@ function buildBasicInfoSection(krx: KrxFlowData, lang: Lang): string {
 | BPS | ${b.bps || 'N/A'} KRW |
 | Credit Ratio | ${b.crd_rt || 'N/A'}% |
 | Foreign Exhaustion | ${b.for_exh_rt || 'N/A'}% |
-| YTD High | ₩${b.oyr_hgst || 'N/A'} |
-| YTD Low | ₩${b.oyr_lwst || 'N/A'} |
+| 52W High | ₩${b['250hgst'] || b.oyr_hgst || 'N/A'} |
+| 52W Low | ₩${b['250lwst'] || b.oyr_lwst || 'N/A'} |
 | Upper Limit | ₩${b.upl_pric || 'N/A'} |
 | Lower Limit | ₩${b.lst_pric || 'N/A'} |
 `
@@ -136,8 +136,8 @@ function buildFlowSection(krx: KrxFlowData, lang: Lang): string {
 
 ### 외국인 현황
 ${foreignSummary}
-- 기관 추정 평균단가: ₩${krx.institTrend.orgnAvg || 'N/A'}
-- 외인 추정 평균단가: ₩${krx.institTrend.forAvg || 'N/A'}
+- 기관 추정 평균단가: ${krx.institTrend.orgnAvg ? `₩${krx.institTrend.orgnAvg}` : 'N/A'}
+- 외인 추정 평균단가: ${krx.institTrend.forAvg ? `₩${krx.institTrend.forAvg}` : 'N/A'}
 
 ### 기관/외인 매매 추이 (최근 10일)
 ${trendTable}
@@ -151,8 +151,8 @@ ${themeList}
 
 ### Foreign Investor Status
 ${foreignSummary}
-- Institutional est. avg price: ₩${krx.institTrend.orgnAvg || 'N/A'}
-- Foreign est. avg price: ₩${krx.institTrend.forAvg || 'N/A'}
+- Institutional est. avg price: ${krx.institTrend.orgnAvg ? `₩${krx.institTrend.orgnAvg}` : 'N/A'}
+- Foreign est. avg price: ${krx.institTrend.forAvg ? `₩${krx.institTrend.forAvg}` : 'N/A'}
 
 ### Institutional / Foreign 10-Day Trend
 ${trendTable}
@@ -266,7 +266,7 @@ function buildInvestorDetailSection(krx: KrxFlowData, lang: Lang): string {
 
   if (lang === 'ko') {
     return `
-## 투자자별 순매수 상세 (금액기준, 키움 ka10059)
+## 투자자별 순매수 상세 (수량기준, 키움 ka10059)
 > (단위: 천주 / 음수=순매도)
 ${header}
 ${sep}
@@ -274,8 +274,8 @@ ${body}
 `
   } else {
     return `
-## Investor Type Net Buy Detail (by Amount, Kiwoom ka10059)
-> (Unit: 1000 shares / negative = net sell)
+## Investor Type Net Buy Detail (by Quantity, Kiwoom ka10059)
+> (Unit: 1,000 shares / negative = net sell)
 ${header}
 ${sep}
 ${body}

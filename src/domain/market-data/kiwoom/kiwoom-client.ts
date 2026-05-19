@@ -133,6 +133,8 @@ export interface StockBasicInfo {
   for_exh_rt: string   // 외인소진률
   oyr_hgst: string     // 연중최고
   oyr_lwst: string     // 연중최저
+  '250hgst'?: string   // 250일 최고 (≈ 52주 최고)
+  '250lwst'?: string   // 250일 최저 (≈ 52주 최저)
   flo_stk: string      // 상장주식수
   base_pric: string    // 기준가
   upl_pric: string     // 상한가
