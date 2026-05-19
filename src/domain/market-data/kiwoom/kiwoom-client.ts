@@ -119,6 +119,78 @@ export interface ThemeGroup {
   dt_prft_rt?: string
 }
 
+export interface StockBasicInfo {
+  stk_cd: string
+  stk_nm: string
+  per: string          // PER
+  eps: string          // EPS
+  roe: string          // ROE
+  pbr: string          // PBR
+  bps: string          // BPS
+  mac: string          // 시가총액
+  mac_wght: string     // 시가총액비중
+  crd_rt: string       // 신용비율
+  for_exh_rt: string   // 외인소진률
+  oyr_hgst: string     // 연중최고
+  oyr_lwst: string     // 연중최저
+  flo_stk: string      // 상장주식수
+  base_pric: string    // 기준가
+  upl_pric: string     // 상한가
+  lst_pric: string     // 하한가
+  open_pric: string    // 시가
+  high_pric: string    // 고가
+  low_pric: string     // 저가
+  sale_amt: string     // 매출액
+  bus_pro: string      // 영업이익
+  cup_nga: string      // 당기순이익
+}
+
+export interface ShortSellingRow {
+  dt: string
+  close_pric: string
+  trde_qty: string        // 거래량
+  shrts_qty: string       // 공매도량
+  ovr_shrts_qty: string   // 누적공매도량
+  trde_wght: string       // 매매비중(%)
+  shrts_trde_prica: string // 공매도거래대금
+}
+
+export interface CreditTrendRow {
+  dt: string
+  cur_prc: string
+  trde_qty: string   // 거래량
+  new: string        // 신규(융자신규)
+  rpya: string       // 상환
+  remn: string       // 잔고
+  remn_rt: string    // 잔고율
+}
+
+export interface ExecutionStrengthDailyRow {
+  dt: string
+  cur_prc: string
+  trde_qty: string       // 거래량
+  cntr_str: string       // 체결강도
+  cntr_str_5min: string  // 체결강도5일
+  cntr_str_20min: string // 체결강도20일
+  cntr_str_60min: string // 체결강도60일
+}
+
+export interface InvestorDetailRow {
+  dt: string
+  cur_prc: string
+  flu_rt: string         // 등락율
+  acc_trde_qty: string   // 누적거래량
+  acc_trde_prica: string // 누적거래대금
+  ind_invsr: string      // 개인투자자
+  frgnr_invsr: string    // 외국인투자자
+  orgn: string           // 기관계
+  fnnc_invt: string      // 금융투자
+  insrnc: string         // 보험
+  invtrt: string         // 투신
+  bank: string           // 은행
+  etc_fnnc: string       // 기타금융
+}
+
 // ─── KiwoomClient ─────────────────────────────────────────────────────────────
 
 export class KiwoomClient {
@@ -195,5 +267,81 @@ export class KiwoomClient {
       { qry_tp: '2', stk_cd: stkCd, date_tp: '20', flu_pl_amt_tp: '1', stex_tp: '1' },
     )
     return r.data.thema_grp ?? []
+  }
+
+  /**
+   * ka10001 — 주식기본정보요청.
+   * Returns PER, EPS, ROE, PBR, 시가총액, 신용비율, 외인소진률, 52주 고저 등.
+   */
+  async getStockBasicInfo(stkCd: string): Promise<StockBasicInfo | null> {
+    const r = await callKiwoom<StockBasicInfo>(
+      this.auth, 'ka10001', '/api/dostk/stkinfo',
+      { stk_cd: stkCd },
+    )
+    return r.data.stk_cd ? r.data : null
+  }
+
+  /**
+   * ka10014 — 공매도추이요청.
+   * Returns short selling volume, amount, and ratio per day.
+   * strtDt/endDt: YYYYMMDD
+   */
+  async getShortSelling(
+    stkCd: string,
+    strtDt: string,
+    endDt: string,
+  ): Promise<ShortSellingRow[]> {
+    const r = await callKiwoom<{ shrts_trnsn?: ShortSellingRow[] }>(
+      this.auth, 'ka10014', '/api/dostk/shsa',
+      { stk_cd: stkCd, tm_tp: '1', strt_dt: strtDt, end_dt: endDt },
+    )
+    return r.data.shrts_trnsn ?? []
+  }
+
+  /**
+   * ka10013 — 신용매매동향요청.
+   * qryTp: '1' = 융자, '2' = 대주. Returns credit balance trend.
+   */
+  async getCreditTrend(
+    stkCd: string,
+    dt: string, // YYYYMMDD
+    qryTp: '1' | '2' = '1',
+  ): Promise<CreditTrendRow[]> {
+    const r = await callKiwoom<{ crd_trde_trend?: CreditTrendRow[] }>(
+      this.auth, 'ka10013', '/api/dostk/stkinfo',
+      { stk_cd: stkCd, dt, qry_tp: qryTp },
+    )
+    return r.data.crd_trde_trend ?? []
+  }
+
+  /**
+   * ka10047 — 체결강도추이일별요청.
+   * Returns daily execution strength (매수체결량/매도체결량 ratio) + 5/20/60-day averages.
+   */
+  async getExecutionStrengthDaily(stkCd: string): Promise<ExecutionStrengthDailyRow[]> {
+    const r = await callKiwoom<{ cntr_str_daly?: ExecutionStrengthDailyRow[] }>(
+      this.auth, 'ka10047', '/api/dostk/mrkcond',
+      { stk_cd: stkCd },
+    )
+    return r.data.cntr_str_daly ?? []
+  }
+
+  /**
+   * ka10059 — 종목별투자자기관별요청.
+   * Returns per-day net buy/sell breakdown by investor type (개인/외국인/기관/금융투자/보험/투신/은행).
+   * amtQtyTp: '1' = 금액, '2' = 수량
+   * trdeTp: '0' = 순매수, '1' = 매수, '2' = 매도
+   */
+  async getInvestorDetail(
+    stkCd: string,
+    dt: string, // YYYYMMDD
+    amtQtyTp: '1' | '2' = '1',
+    trdeTp: '0' | '1' | '2' = '0',
+  ): Promise<InvestorDetailRow[]> {
+    const r = await callKiwoom<{ stk_invsr_orgn?: InvestorDetailRow[] }>(
+      this.auth, 'ka10059', '/api/dostk/stkinfo',
+      { stk_cd: stkCd, dt, amt_qty_tp: amtQtyTp, trde_tp: trdeTp, unit_tp: '1000' },
+    )
+    return r.data.stk_invsr_orgn ?? []
   }
 }

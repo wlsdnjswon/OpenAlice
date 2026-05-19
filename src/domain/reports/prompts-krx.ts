@@ -51,6 +51,57 @@ function langInstruction(lang: Lang): string {
     : 'Write the entire report in **English**.'
 }
 
+// ─── Section builders ─────────────────────────────────────────────────────────
+
+function buildBasicInfoSection(krx: KrxFlowData, lang: Lang): string {
+  const b = krx.basicInfo
+  if (!b) return ''
+
+  if (lang === 'ko') {
+    return `
+## 주식 기본 정보 (키움 ka10001)
+| 항목 | 값 |
+|------|-----|
+| 시가총액 | ${b.mac || 'N/A'}억 원 (시총비중 ${b.mac_wght || 'N/A'}%) |
+| 상장주식수 | ${b.flo_stk || 'N/A'}주 |
+| PER | ${b.per || 'N/A'} |
+| EPS | ${b.eps || 'N/A'}원 |
+| ROE | ${b.roe || 'N/A'}% |
+| PBR | ${b.pbr || 'N/A'} |
+| BPS | ${b.bps || 'N/A'}원 |
+| 신용비율 | ${b.crd_rt || 'N/A'}% |
+| 외인소진률 | ${b.for_exh_rt || 'N/A'}% |
+| 연중최고 | ₩${b.oyr_hgst || 'N/A'} |
+| 연중최저 | ₩${b.oyr_lwst || 'N/A'} |
+| 기준가 | ₩${b.base_pric || 'N/A'} |
+| 상한가 | ₩${b.upl_pric || 'N/A'} |
+| 하한가 | ₩${b.lst_pric || 'N/A'} |
+| 매출액 | ${b.sale_amt || 'N/A'}억 원 |
+| 영업이익 | ${b.bus_pro || 'N/A'}억 원 |
+| 당기순이익 | ${b.cup_nga || 'N/A'}억 원 |
+`
+  } else {
+    return `
+## Stock Fundamentals (Kiwoom ka10001)
+| Item | Value |
+|------|-------|
+| Market Cap | ${b.mac || 'N/A'} (weight: ${b.mac_wght || 'N/A'}%) |
+| Shares Listed | ${b.flo_stk || 'N/A'} |
+| PER | ${b.per || 'N/A'} |
+| EPS | ${b.eps || 'N/A'} KRW |
+| ROE | ${b.roe || 'N/A'}% |
+| PBR | ${b.pbr || 'N/A'} |
+| BPS | ${b.bps || 'N/A'} KRW |
+| Credit Ratio | ${b.crd_rt || 'N/A'}% |
+| Foreign Exhaustion | ${b.for_exh_rt || 'N/A'}% |
+| YTD High | ₩${b.oyr_hgst || 'N/A'} |
+| YTD Low | ₩${b.oyr_lwst || 'N/A'} |
+| Upper Limit | ₩${b.upl_pric || 'N/A'} |
+| Lower Limit | ₩${b.lst_pric || 'N/A'} |
+`
+  }
+}
+
 function buildFlowSection(krx: KrxFlowData, lang: Lang): string {
   const flt = krx.foreignLatest
   const rows = krx.institTrend.rows.slice(0, 10)
@@ -64,11 +115,11 @@ function buildFlowSection(krx: KrxFlowData, lang: Lang): string {
   let trendTable = ''
   if (rows.length > 0) {
     const header = lang === 'ko'
-      ? '| 일자 | 종가 | 기관누적 | 외인누적 | 한도소진율 |'
-      : '| Date | Close | Inst.Cum | For.Cum | Limit% |'
-    const sep = '|------|------|----------|---------|---------|'
+      ? '| 일자 | 종가 | 등락률 | 기관누적 | 외인누적 | 기관일별 | 외인일별 | 한도소진 |'
+      : '| Date | Close | Chg% | Inst.Cum | For.Cum | Inst.Day | For.Day | Limit% |'
+    const sep = '|------|------|------|---------|--------|---------|--------|--------|'
     const body = rows.map((r) =>
-      `| ${r.dt} | ${r.close_pric} | ${r.orgn_dt_acc} | ${r.for_dt_acc} | ${r.limit_exh_rt}% |`
+      `| ${r.dt} | ${r.close_pric} | ${r.flu_rt}% | ${r.orgn_dt_acc} | ${r.for_dt_acc} | ${r.orgn_daly_nettrde_qty} | ${r.for_daly_nettrde_qty} | ${r.limit_exh_rt}% |`
     ).join('\n')
     trendTable = `\n${header}\n${sep}\n${body}`
   } else {
@@ -76,17 +127,19 @@ function buildFlowSection(krx: KrxFlowData, lang: Lang): string {
   }
 
   const themeList = krx.themes.length > 0
-    ? krx.themes.map((t) => `${t.thema_nm} (종목수: ${t.stk_num})`).join(', ')
+    ? krx.themes.map((t) => `${t.thema_nm} (종목수: ${t.stk_num}${t.flu_rt ? `, 수익률: ${t.flu_rt}%` : ''})`).join(', ')
     : lang === 'ko' ? '테마 정보 없음' : 'No theme data'
 
   if (lang === 'ko') {
     return `
-## 한국 시장 수급 데이터 (키움 API)
+## 기관/외국인 수급 데이터 (키움 API)
 
 ### 외국인 현황
 ${foreignSummary}
+- 기관 추정 평균단가: ₩${krx.institTrend.orgnAvg || 'N/A'}
+- 외인 추정 평균단가: ₩${krx.institTrend.forAvg || 'N/A'}
 
-### 기관/외인 30일 매매 추이
+### 기관/외인 매매 추이 (최근 10일)
 ${trendTable}
 
 ### 테마 소속
@@ -94,16 +147,138 @@ ${themeList}
 `
   } else {
     return `
-## Korean Market Flow Data (Kiwoom API)
+## Institutional / Foreign Flow Data (Kiwoom API)
 
 ### Foreign Investor Status
 ${foreignSummary}
+- Institutional est. avg price: ₩${krx.institTrend.orgnAvg || 'N/A'}
+- Foreign est. avg price: ₩${krx.institTrend.forAvg || 'N/A'}
 
-### Institutional / Foreign 30-Day Trend
+### Institutional / Foreign 10-Day Trend
 ${trendTable}
 
 ### Theme Associations
 ${themeList}
+`
+  }
+}
+
+function buildShortSellingSection(krx: KrxFlowData, lang: Lang): string {
+  const rows = krx.shortSelling.slice(0, 10)
+  if (!rows.length) return ''
+
+  const header = lang === 'ko'
+    ? '| 일자 | 종가 | 공매도량 | 매매비중 | 공매도대금 |'
+    : '| Date | Close | Short Vol | Weight% | Short Amt |'
+  const sep = '|------|------|---------|--------|---------|'
+  const body = rows.map((r) =>
+    `| ${r.dt} | ${r.close_pric} | ${r.shrts_qty} | ${r.trde_wght}% | ${r.shrts_trde_prica} |`
+  ).join('\n')
+
+  if (lang === 'ko') {
+    return `
+## 공매도 추이 (키움 ka10014)
+${header}
+${sep}
+${body}
+`
+  } else {
+    return `
+## Short Selling Trend (Kiwoom ka10014)
+${header}
+${sep}
+${body}
+`
+  }
+}
+
+function buildCreditSection(krx: KrxFlowData, lang: Lang): string {
+  const rows = krx.creditTrend.slice(0, 10)
+  if (!rows.length) return ''
+
+  const header = lang === 'ko'
+    ? '| 일자 | 현재가 | 신규 | 상환 | 잔고 | 잔고율 |'
+    : '| Date | Price | New | Repaid | Balance | Balance% |'
+  const sep = '|------|------|------|------|------|-------|'
+  const body = rows.map((r) =>
+    `| ${r.dt} | ${r.cur_prc} | ${r.new} | ${r.rpya} | ${r.remn} | ${r.remn_rt}% |`
+  ).join('\n')
+
+  if (lang === 'ko') {
+    return `
+## 신용매매동향 (융자잔고, 키움 ka10013)
+${header}
+${sep}
+${body}
+`
+  } else {
+    return `
+## Credit (Margin) Trading Trend (Kiwoom ka10013)
+${header}
+${sep}
+${body}
+`
+  }
+}
+
+function buildExecStrengthSection(krx: KrxFlowData, lang: Lang): string {
+  const rows = krx.execStrength.slice(0, 10)
+  if (!rows.length) return ''
+
+  const header = lang === 'ko'
+    ? '| 일자 | 현재가 | 거래량 | 체결강도 | 5일강도 | 20일강도 | 60일강도 |'
+    : '| Date | Price | Volume | Str | 5D Str | 20D Str | 60D Str |'
+  const sep = '|------|------|------|------|------|------|------|'
+  const body = rows.map((r) =>
+    `| ${r.dt} | ${r.cur_prc} | ${r.trde_qty} | ${r.cntr_str} | ${r.cntr_str_5min} | ${r.cntr_str_20min} | ${r.cntr_str_60min} |`
+  ).join('\n')
+
+  if (lang === 'ko') {
+    return `
+## 체결강도 추이 (키움 ka10047)
+> 체결강도 = 매수체결량/매도체결량 × 100. 100 초과 시 매수세 우위.
+${header}
+${sep}
+${body}
+`
+  } else {
+    return `
+## Execution Strength Trend (Kiwoom ka10047)
+> Execution strength = buy volume / sell volume × 100. Above 100 = buy-side dominant.
+${header}
+${sep}
+${body}
+`
+  }
+}
+
+function buildInvestorDetailSection(krx: KrxFlowData, lang: Lang): string {
+  const rows = krx.investorDetail.slice(0, 10)
+  if (!rows.length) return ''
+
+  const header = lang === 'ko'
+    ? '| 일자 | 개인 | 외국인 | 기관계 | 금융투자 | 보험 | 투신 | 은행 |'
+    : '| Date | Retail | Foreign | Inst. | FinInvst | Insrnc | Fund | Bank |'
+  const sep = '|------|------|------|------|------|------|------|------|'
+  const body = rows.map((r) =>
+    `| ${r.dt} | ${r.ind_invsr} | ${r.frgnr_invsr} | ${r.orgn} | ${r.fnnc_invt} | ${r.insrnc} | ${r.invtrt} | ${r.bank} |`
+  ).join('\n')
+
+  if (lang === 'ko') {
+    return `
+## 투자자별 순매수 상세 (금액기준, 키움 ka10059)
+> (단위: 천주 / 음수=순매도)
+${header}
+${sep}
+${body}
+`
+  } else {
+    return `
+## Investor Type Net Buy Detail (by Amount, Kiwoom ka10059)
+> (Unit: 1000 shares / negative = net sell)
+${header}
+${sep}
+${body}
 `
   }
 }
@@ -131,37 +306,62 @@ export function buildKrxShortPrompt(p: KrxShortParams): string {
 
   return `${langInstruction(p.lang)}
 
-You are an expert Korean equity analyst with access to real-time domestic institutional and foreign investor flow data. Generate a structured **한국 시장 특화 단기 분석 보고서** for ${p.symbol} (${name}).
+You are an expert Korean equity analyst with access to real-time Kiwoom API data including institutional flow, foreign investor data, short selling, credit trading, execution strength, and investor type breakdown. Generate a **한국 시장 특화 단기 AI 분석 보고서** for ${p.symbol} (${name}).
 
-## 시장 현황
+## 종목 현황
 | 항목 | 값 |
 |------|-------|
 | 현재가 | ₩${fmt(p.lastClose, 0)} |
 | 전일대비 | ${pct(p.change1d)} |
 | 업종/산업 | ${sector}${industry ? ` / ${industry}` : ''} |
-
-## 기술적 지표
+${buildBasicInfoSection(p.krx, p.lang)}
+## 기술적 지표 (90일 일봉 기반)
 | 지표 | 값 및 해석 |
 |-----------|----------------------|
 | RSI(14) | ${rsiLabel(p.rsi, p.lang)} |
-| MACD | ${macdLabel(p.macd, p.lang)} |
-| 볼린저밴드 | ${bbLabel(p.bb, p.lang)} |
+| MACD(12,26,9) | ${macdLabel(p.macd, p.lang)} |
+| 볼린저밴드(20,2) | ${bbLabel(p.bb, p.lang)} |
 | 거래량비율 | ${p.volumeRatio != null ? `${fmt(p.volumeRatio)}× (20일 평균 대비)` : 'N/A'} |
-${buildFlowSection(p.krx, p.lang)}
+${buildFlowSection(p.krx, p.lang)}${buildShortSellingSection(p.krx, p.lang)}${buildCreditSection(p.krx, p.lang)}${buildExecStrengthSection(p.krx, p.lang)}${buildInvestorDetailSection(p.krx, p.lang)}
 ## 관련 뉴스 (최근 24시간)
 ${newsBlock(p.newsItems, p.lang)}
 
 ---
 
-**분석 요청:** 위의 기술적 지표와 **기관/외국인 수급 데이터**를 종합하여 다음 섹션을 작성하세요:
+**분석 요청:** 위의 모든 데이터를 종합하여 다음 섹션을 포함한 전문적인 단기 분석 보고서를 작성하세요. 각 섹션에서 **구체적인 수치(가격, %, 날짜)**를 반드시 제시하세요:
 
-1. **수급 종합 평가** — 외국인/기관의 최근 포지션 변화와 그 의미
-2. **기술적 분석** — 매수/매도 신호 종합
-3. **단기 매매 전략** — 진입 근거, 목표가 범위, 손절 수준
-4. **테마 분석** — 해당 테마의 시장 내 모멘텀
-5. **리스크 요인** — 수급/기술적 관점의 하방 위험
+### 1. 📊 수급 종합 평가
+- 외국인/기관 최근 포지션 변화 방향성 및 강도 (연속 매수/매도 일수 포함)
+- 기관별(금융투자/투신/보험/은행) 동향에서 읽히는 스마트머니 흐름
+- 외인소진률 변화가 주가에 미치는 영향 분석
 
-${p.lang === 'ko' ? '응답은 구조화된 마크다운 형식으로 작성해 주세요.' : 'Write the response in structured Markdown format.'}
+### 2. ⚡ 체결강도 & 모멘텀 분석
+- 체결강도 추이로 본 매수세/매도세 변화
+- 거래량 비율과 체결강도의 괴리 또는 수렴 해석
+
+### 3. ⚠️ 공매도 & 신용 리스크 평가
+- 공매도 매매비중 추이 (증가/감소 추세와 의미)
+- 신용 융자 잔고율 변화 (과열/정상 판단)
+- 공매도+신용이 결합될 경우 하방 압력 정도
+
+### 4. 📈 기술적 분석 종합
+- RSI/MACD/볼린저밴드 각각의 시그널을 종합한 단기 방향성
+- 현재 가격 위치 (연중 고저, 볼린저 밴드, 기준가 대비)
+- 지지선과 저항선 구체적 가격 제시
+
+### 5. 🎯 단기 매매 전략 (가장 중요)
+**다음 3가지를 반드시 구체적인 가격으로 제시하세요:**
+- **진입 타점**: 매수를 검토할 가격대 (또는 조건) — 예: "₩XX,XXX ~ ₩XX,XXX 사이 분할매수"
+- **1차 목표가**: 수급/기술 분석 기반 단기 목표 가격
+- **2차 목표가**: 추가 상승 시 목표 가격
+- **손절선**: 이 가격 하향 돌파 시 손절 — 이유 포함
+- **투자 기간**: 예상 단기 보유 기간 (예: 3~5 거래일)
+- **전략 근거**: 위 5개 분석 결과를 한 문단으로 종합
+
+### 6. 📌 리스크 요인
+- 수급/기술/거시적 관점의 구체적 하방 리스크 3가지
+
+${p.lang === 'ko' ? '응답은 구조화된 마크다운 형식으로 작성해 주세요. 각 분석은 데이터 기반으로 명확하게 작성하고, 투자 판단에 직접 활용 가능한 수준의 구체성을 유지하세요.' : 'Write the response in structured Markdown format with specific price levels and data-driven reasoning.'}
 `
 }
 
@@ -196,7 +396,7 @@ You are an expert Korean equity analyst. Generate a comprehensive **한국 시�
 - **현재가:** ₩${fmt(p.lastClose, 0)}
 - **52주 고가:** ₩${fmt(p.price52wHigh, 0)}
 - **52주 저가:** ₩${fmt(p.price52wLow, 0)}
-${buildFlowSection(p.krx, p.lang)}
+${buildBasicInfoSection(p.krx, p.lang)}${buildFlowSection(p.krx, p.lang)}${buildExecStrengthSection(p.krx, p.lang)}${buildInvestorDetailSection(p.krx, p.lang)}${buildShortSellingSection(p.krx, p.lang)}
 ## 재무 데이터 (yfinance 기준)
 ${JSON.stringify({
   income: snap.income,
@@ -210,15 +410,36 @@ ${newsBlock(newsItems, p.lang)}
 
 ---
 
-**분석 요청:** 위 데이터를 바탕으로 다음 섹션을 포함한 장기 투자 분석 보고서를 작성하세요:
+**분석 요청:** 위 모든 데이터를 바탕으로 다음 섹션을 포함한 장기 투자 분석 보고서를 작성하세요. 각 섹션에서 **구체적인 수치**를 반드시 제시하세요:
 
-1. **기업 펀더멘털 분석** — 매출/이익 추이, 재무 건전성
-2. **한국 시장 수급 구조** — 외국인/기관 장기 포지셔닝 해석
-3. **밸류에이션 분석** — 현재 가격의 적정성
-4. **테마 & 산업 포지셔닝** — 한국 주식 시장 내 테마 모멘텀
-5. **장기 투자 결론** — 매수/보유/매도 의견 및 목표 가격
-6. **리스크 요인** — 거시/산업/기업별 하방 리스크
+### 1. 📊 기업 펀더멘털 분석
+- 매출/영업이익/순이익 추이 및 성장성 (YoY 성장률 계산 포함)
+- PER/PBR/ROE 수준의 현재 밸류에이션 평가 (업종 평균 대비)
+- 재무 건전성 판단 (부채비율, 유동비율)
 
-${p.lang === 'ko' ? '응답은 구조화된 마크다운 형식으로 작성해 주세요.' : 'Write the response in structured Markdown format.'}
+### 2. 🌊 한국 시장 수급 구조 분석
+- 외국인/기관 장기 포지셔닝 흐름 해석
+- 기관별 세부 동향에서 읽히는 장기 스마트머니 방향성
+- 외인소진률과 기관 추정 평균단가의 장기적 의미
+
+### 3. ⚡ 기술적 모멘텀 & 수급 강도
+- 체결강도 장기 추이 (60일 강도 포함) 분석
+- 투자자별 누적 순매수 방향성
+
+### 4. 📈 밸류에이션 & 목표 주가
+- 현재 가격이 적정한지 PER/PBR/DCF 관점에서 분석
+- **장기 목표 주가 제시 (6개월~1년 기준)**: 근거 포함
+- 밸류에이션 상단/하단 범위
+
+### 5. 🎯 장기 투자 결론
+- **매수/보유/매도** 의견 명확히 제시
+- **최적 분할매수 가격대**: 구체적 범위
+- **장기 손절 기준**: 펀더멘털 훼손 시나리오
+
+### 6. ⚠️ 리스크 요인
+- 거시(금리/환율/경기), 산업, 기업별 구체적 하방 리스크
+- 공매도/신용 리스크가 장기 투자에 미치는 영향
+
+${p.lang === 'ko' ? '응답은 구조화된 마크다운 형식으로 작성해 주세요. 장기 투자자가 직접 의사결정에 활용할 수 있는 수준의 구체적이고 데이터 기반 분석을 제공하세요.' : 'Write the response in structured Markdown format with data-driven analysis and specific price targets.'}
 `
 }

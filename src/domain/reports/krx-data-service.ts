@@ -3,7 +3,17 @@
  * Wraps Kiwoom API calls with graceful fallbacks.
  */
 
-import type { KiwoomClient, ForeignFlowRow, InstitTrendRow, ThemeGroup } from '../market-data/kiwoom/kiwoom-client.js'
+import type {
+  KiwoomClient,
+  ForeignFlowRow,
+  InstitTrendRow,
+  ThemeGroup,
+  StockBasicInfo,
+  ShortSellingRow,
+  CreditTrendRow,
+  ExecutionStrengthDailyRow,
+  InvestorDetailRow,
+} from '../market-data/kiwoom/kiwoom-client.js'
 
 export interface KrxFlowData {
   /** Latest foreign investor snapshot (most recent row from ka10008). */
@@ -16,6 +26,16 @@ export interface KrxFlowData {
   }
   /** Theme groups the stock belongs to (ka90001 stock-mode). */
   themes: ThemeGroup[]
+  /** Stock basic info: PER/EPS/ROE/PBR/시가총액/신용비율/외인소진률 (ka10001). */
+  basicInfo: StockBasicInfo | null
+  /** Short selling trend — last 20 days (ka10014). */
+  shortSelling: ShortSellingRow[]
+  /** Credit (margin) trading trend — last 20 days (ka10013). */
+  creditTrend: CreditTrendRow[]
+  /** Daily execution strength — last 20 days (ka10047). */
+  execStrength: ExecutionStrengthDailyRow[]
+  /** Per-investor-type net buy breakdown — last 20 days (ka10059). */
+  investorDetail: InvestorDetailRow[]
 }
 
 /** Format a Date as YYYYMMDD in KST (UTC+9). Using UTC here gives the wrong date between 15:00–24:00 UTC. */
@@ -42,11 +62,28 @@ export class KrxDataService {
 
   async fetch(symbol: string): Promise<KrxFlowData> {
     const stkCd = stripSuffix(symbol)
+    const todayStr = today()
+    const ago30 = nDaysAgo(30)
+    const ago20 = nDaysAgo(20)
 
-    const [foreignFlow, institResult, themes] = await Promise.allSettled([
+    const [
+      foreignFlow,
+      institResult,
+      themes,
+      basicInfo,
+      shortSelling,
+      creditTrend,
+      execStrength,
+      investorDetail,
+    ] = await Promise.allSettled([
       this.client.getForeignFlow(stkCd),
-      this.client.getInstitTrend(stkCd, nDaysAgo(30), today()),
+      this.client.getInstitTrend(stkCd, ago30, todayStr),
       this.client.getThemesByStock(stkCd),
+      this.client.getStockBasicInfo(stkCd),
+      this.client.getShortSelling(stkCd, ago20, todayStr),
+      this.client.getCreditTrend(stkCd, todayStr, '1'),
+      this.client.getExecutionStrengthDaily(stkCd),
+      this.client.getInvestorDetail(stkCd, todayStr, '1', '0'),
     ])
 
     const foreignRows = foreignFlow.status === 'fulfilled' ? foreignFlow.value : []
@@ -62,6 +99,11 @@ export class KrxDataService {
       foreignLatest,
       institTrend: institData,
       themes: themeList.slice(0, 5),
+      basicInfo: basicInfo.status === 'fulfilled' ? basicInfo.value : null,
+      shortSelling: (shortSelling.status === 'fulfilled' ? shortSelling.value : []).slice(0, 20),
+      creditTrend: (creditTrend.status === 'fulfilled' ? creditTrend.value : []).slice(0, 20),
+      execStrength: (execStrength.status === 'fulfilled' ? execStrength.value : []).slice(0, 20),
+      investorDetail: (investorDetail.status === 'fulfilled' ? investorDetail.value : []).slice(0, 20),
     }
   }
 }

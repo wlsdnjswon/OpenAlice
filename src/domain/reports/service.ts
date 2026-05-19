@@ -266,6 +266,11 @@ export class ReportService {
         foreignLatest: null,
         institTrend: { rows: [], orgnAvg: '', forAvg: '' },
         themes: [],
+        basicInfo: null,
+        shortSelling: [],
+        creditTrend: [],
+        execStrength: [],
+        investorDetail: [],
       }))
 
       const bars = (historical as Array<Record<string, unknown>>)
